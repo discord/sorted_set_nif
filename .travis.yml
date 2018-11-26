@@ -1,0 +1,25 @@
+sudo: false
+language: elixir
+git:
+  depth: 3
+env:
+  - MIX_ENV=test
+script:
+  - mix test
+matrix:
+  include:
+    - name: "Elixir 1.5.3 OTP 20.3.8"
+      elixir: 1.5.3
+      otp_release: 20.3.8
+    - name: "Elixir 1.6.6 OTP 20.3.8"
+      elixir: 1.6.6
+      otp_release: 20.3.8
+    - name: "Elixir 1.6.6 OTP 21.1.1"
+      elixir: 1.6.6
+      otp_release: 21.1.1
+    - name: "Elixir 1.7.3 OTP 20.3.8"
+      elixir: 1.7.3
+      otp_release: 20.3.8
+    - name: "Elixir 1.7.3 OTP 21.1.1"
+      elixir: 1.7.3
+      otp_release: 21.1.1
