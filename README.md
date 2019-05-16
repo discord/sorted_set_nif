@@ -1,6 +1,5 @@
 # Discord.SortedSet
 
-[![Master](https://travis-ci.org/discordapp/sorted_set_nif.svg?branch=master)](https://travis-ci.org/discordapp/sorted_set_nif)
 [![Hex.pm Version](http://img.shields.io/hexpm/v/sorted_set_nif.svg?style=flat)](https://hex.pm/packages/sorted_set_nif)
 
 SortedSet is a fast and efficient data structure that provides certain guarantees and
