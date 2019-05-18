@@ -4,7 +4,6 @@ use rustler::types::tuple::make_tuple;
 use rustler::Encoder;
 use rustler::Env;
 use rustler::Term;
-use std::cmp::min;
 use std::cmp::Ordering;
 
 /// SupportedTerm is an enum that covers all the Erlang / Elixir term types that can be stored in
@@ -21,7 +20,7 @@ use std::cmp::Ordering;
 ///
 /// Types that are supported but not explicitly listed
 ///   - Boolean (Note that booleans in Erlang / Elixir are just atoms)
-#[derive(Eq, Debug, Clone)]
+#[derive(Eq, Debug, Clone, PartialEq)]
 pub enum SupportedTerm {
     Integer(i64),
     Atom(String),
@@ -50,12 +49,10 @@ impl Ord for SupportedTerm {
                     let other_length = inner.len();
 
                     if self_length == other_length {
-                        let mut idx = 0;
-                        while idx < self_length {
-                            match self_inner[idx].cmp(&inner[idx]) {
-                                Ordering::Less => return Ordering::Less,
-                                Ordering::Greater => return Ordering::Greater,
-                                _ => idx += 1,
+                        for (self_term, term) in self_inner.iter().zip(inner.iter()) {
+                            match self_term.cmp(term) {
+                                Ordering::Equal => {}
+                                o => return o,
                             }
                         }
                         Ordering::Equal
@@ -69,29 +66,7 @@ impl Ord for SupportedTerm {
                 SupportedTerm::Integer(_) => Ordering::Greater,
                 SupportedTerm::Atom(_) => Ordering::Greater,
                 SupportedTerm::Tuple(_) => Ordering::Greater,
-                SupportedTerm::List(inner) => {
-                    let self_length = self_inner.len();
-                    let other_length = inner.len();
-
-                    let max_common = min(self_length, other_length);
-                    let mut idx = 0;
-
-                    while idx < max_common {
-                        match self_inner[idx].cmp(&inner[idx]) {
-                            Ordering::Greater => return Ordering::Greater,
-                            Ordering::Less => return Ordering::Less,
-                            _ => idx += 1,
-                        }
-                    }
-
-                    if self_length == other_length {
-                        Ordering::Equal
-                    } else if self_length < other_length {
-                        Ordering::Less
-                    } else {
-                        Ordering::Greater
-                    }
-                }
+                SupportedTerm::List(inner) => self_inner.cmp(inner),
                 _ => Ordering::Less,
             },
             SupportedTerm::Bitstring(self_inner) => match other {
@@ -108,65 +83,6 @@ impl PartialOrd for SupportedTerm {
     }
 }
 
-impl PartialEq for SupportedTerm {
-    fn eq(&self, other: &SupportedTerm) -> bool {
-        match self {
-            SupportedTerm::Integer(self_inner) => match other {
-                SupportedTerm::Integer(inner) => self_inner == inner,
-                _ => false,
-            },
-            SupportedTerm::Atom(self_inner) => match other {
-                SupportedTerm::Atom(inner) => self_inner == inner,
-                _ => false,
-            },
-            SupportedTerm::Tuple(self_inner) => match other {
-                SupportedTerm::Tuple(inner) => {
-                    let length = self_inner.len();
-
-                    if length != inner.len() {
-                        return false;
-                    }
-
-                    let mut idx = 0;
-
-                    while idx < length {
-                        if self_inner[idx] != inner[idx] {
-                            return false;
-                        }
-                    }
-
-                    true
-                }
-                _ => false,
-            },
-            SupportedTerm::List(self_inner) => match other {
-                SupportedTerm::List(inner) => {
-                    let length = self_inner.len();
-
-                    if length != inner.len() {
-                        return false;
-                    }
-
-                    let mut idx = 0;
-
-                    while idx < length {
-                        if self_inner[idx] != inner[idx] {
-                            return false;
-                        }
-                    }
-
-                    true
-                }
-                _ => false,
-            },
-            SupportedTerm::Bitstring(self_inner) => match other {
-                SupportedTerm::Bitstring(inner) => self_inner == inner,
-                _ => false,
-            },
-        }
-    }
-}
-
 impl Encoder for SupportedTerm {
     fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
         match self {
@@ -176,7 +92,7 @@ impl Encoder for SupportedTerm {
                 Err(_) => atoms::error().encode(env),
             },
             SupportedTerm::Tuple(inner) => {
-                let terms: Vec<_> = inner.into_iter().map(|t| t.encode(env)).collect();
+                let terms: Vec<_> = inner.iter().map(|t| t.encode(env)).collect();
                 make_tuple(env, terms.as_ref()).encode(env)
             }
             SupportedTerm::List(inner) => inner.encode(env),
