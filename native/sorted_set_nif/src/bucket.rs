@@ -1,10 +1,9 @@
 use std::cmp::Ordering;
 use std::ptr;
 use supported_term::SupportedTerm;
-use AddResult;
-use AddResult::{Added, Duplicate};
+use Error;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct Bucket {
     pub data: Vec<SupportedTerm>,
 }
@@ -14,12 +13,12 @@ impl Bucket {
         self.data.len()
     }
 
-    pub fn add(&mut self, item: SupportedTerm) -> AddResult {
+    pub fn add(&mut self, item: SupportedTerm) -> Result<usize, Error> {
         match self.data.binary_search(&item) {
-            Ok(idx) => Duplicate(idx),
+            Ok(idx) => Err(Error::Duplicate(idx)),
             Err(idx) => {
                 self.data.insert(idx, item);
-                Added(idx)
+                Ok(idx)
             }
         }
     }
@@ -37,7 +36,7 @@ impl Bucket {
             other.set_len(other_len);
 
             ptr::copy_nonoverlapping(
-                self.data.as_ptr().offset(at as isize),
+                self.data.as_ptr().add(at),
                 other.as_mut_ptr(),
                 other.len(),
             );
@@ -72,11 +71,10 @@ mod tests {
     use bucket::Bucket;
     use std::cmp::Ordering;
     use supported_term::SupportedTerm;
-    use AddResult;
 
     #[test]
     fn test_item_compare_empty_bucket() {
-        let bucket = Bucket { data: Vec::new() };
+        let bucket = Bucket::default();
 
         let item = SupportedTerm::Integer(5);
 
@@ -85,9 +83,9 @@ mod tests {
 
     #[test]
     fn test_item_compare_when_less_than_first_item() {
-        let mut bucket = Bucket { data: Vec::new() };
+        let mut bucket = Bucket::default();
         let first_item = SupportedTerm::Integer(5);
-        assert_eq!(bucket.add(first_item), AddResult::Added(0));
+        assert_eq!(bucket.add(first_item).unwrap(), 0);
 
         let item = SupportedTerm::Integer(3);
 
@@ -96,21 +94,21 @@ mod tests {
 
     #[test]
     fn test_item_compare_when_equal_to_first_item() {
-        let mut bucket = Bucket { data: Vec::new() };
+        let mut bucket = Bucket::default();
         let first_item = SupportedTerm::Integer(5);
         let item = first_item.clone();
 
-        assert_eq!(bucket.add(first_item), AddResult::Added(0));
+        assert_eq!(bucket.add(first_item).unwrap(), 0);
         assert_eq!(bucket.item_compare(&item), Ordering::Equal);
     }
 
     #[test]
     fn test_item_compare_when_greater_than_last_item() {
-        let mut bucket = Bucket { data: Vec::new() };
+        let mut bucket = Bucket::default();
 
-        assert_eq!(bucket.add(SupportedTerm::Integer(1)), AddResult::Added(0));
-        assert_eq!(bucket.add(SupportedTerm::Integer(2)), AddResult::Added(1));
-        assert_eq!(bucket.add(SupportedTerm::Integer(3)), AddResult::Added(2));
+        assert_eq!(bucket.add(SupportedTerm::Integer(1)).unwrap(), 0);
+        assert_eq!(bucket.add(SupportedTerm::Integer(2)).unwrap(), 1);
+        assert_eq!(bucket.add(SupportedTerm::Integer(3)).unwrap(), 2);
 
         let item = SupportedTerm::Integer(5);
 
@@ -119,11 +117,11 @@ mod tests {
 
     #[test]
     fn test_item_compare_when_equal_to_last_item() {
-        let mut bucket = Bucket { data: Vec::new() };
+        let mut bucket = Bucket::default();
 
-        assert_eq!(bucket.add(SupportedTerm::Integer(1)), AddResult::Added(0));
-        assert_eq!(bucket.add(SupportedTerm::Integer(2)), AddResult::Added(1));
-        assert_eq!(bucket.add(SupportedTerm::Integer(3)), AddResult::Added(2));
+        assert_eq!(bucket.add(SupportedTerm::Integer(1)).unwrap(), 0);
+        assert_eq!(bucket.add(SupportedTerm::Integer(2)).unwrap(), 1);
+        assert_eq!(bucket.add(SupportedTerm::Integer(3)).unwrap(), 2);
 
         let item = SupportedTerm::Integer(3);
 
@@ -132,11 +130,11 @@ mod tests {
 
     #[test]
     fn test_item_between_first_and_last_duplicate() {
-        let mut bucket = Bucket { data: Vec::new() };
+        let mut bucket = Bucket::default();
 
-        assert_eq!(bucket.add(SupportedTerm::Integer(1)), AddResult::Added(0));
-        assert_eq!(bucket.add(SupportedTerm::Integer(2)), AddResult::Added(1));
-        assert_eq!(bucket.add(SupportedTerm::Integer(3)), AddResult::Added(2));
+        assert_eq!(bucket.add(SupportedTerm::Integer(1)).unwrap(), 0);
+        assert_eq!(bucket.add(SupportedTerm::Integer(2)).unwrap(), 1);
+        assert_eq!(bucket.add(SupportedTerm::Integer(3)).unwrap(), 2);
 
         let item = SupportedTerm::Integer(1);
 
@@ -145,11 +143,11 @@ mod tests {
 
     #[test]
     fn test_item_between_first_and_last_unique() {
-        let mut bucket = Bucket { data: Vec::new() };
+        let mut bucket = Bucket::default();
 
-        assert_eq!(bucket.add(SupportedTerm::Integer(2)), AddResult::Added(0));
-        assert_eq!(bucket.add(SupportedTerm::Integer(4)), AddResult::Added(1));
-        assert_eq!(bucket.add(SupportedTerm::Integer(6)), AddResult::Added(2));
+        assert_eq!(bucket.add(SupportedTerm::Integer(2)).unwrap(), 0);
+        assert_eq!(bucket.add(SupportedTerm::Integer(4)).unwrap(), 1);
+        assert_eq!(bucket.add(SupportedTerm::Integer(6)).unwrap(), 2);
 
         let item = SupportedTerm::Integer(3);
 

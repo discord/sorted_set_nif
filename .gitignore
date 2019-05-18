@@ -27,3 +27,6 @@ erl_crash.dump
 
 # Ignore the output of benchmarking
 /bench/results
+
+# IDEA specific
+native/sorted_set_nif/.idea

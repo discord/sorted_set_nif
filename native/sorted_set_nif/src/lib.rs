@@ -2,6 +2,8 @@
 extern crate rustler;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate failure;
 
 mod bucket;
 mod configuration;
@@ -15,6 +17,8 @@ use rustler::{Encoder, Env, NifResult, Term};
 use sorted_set::SortedSet;
 use std::sync::Mutex;
 use supported_term::SupportedTerm;
+
+
 
 mod atoms {
     rustler_atoms! {
@@ -41,33 +45,24 @@ mod atoms {
 
 pub struct SortedSetResource(Mutex<SortedSet>);
 
-#[derive(Debug, PartialEq)]
-pub enum AddResult {
-    Added(usize),
+#[derive(Debug, PartialEq, Eq, Fail)]
+pub enum Error {
+    #[fail(display = "Duplicate at index: {}", 0)]
     Duplicate(usize),
-}
-
-#[derive(Debug, PartialEq)]
-pub enum RemoveResult {
-    Removed(usize),
+    #[fail(display = "Not found at index: {}", 0)]
+    NotFoundAtIndex(usize),
+    #[fail(display = "Not found")]
     NotFound,
+    #[fail(display = "Max bucket size exceeded")]
+    MaxBucketSizeExceeded
 }
 
-#[derive(Debug, PartialEq)]
-pub enum FindResult {
-    Found {
-        bucket_idx: usize,
-        inner_idx: usize,
-        idx: usize,
-    },
-    NotFound,
+pub struct FoundData {
+    bucket_idx: usize,
+    inner_idx: usize,
+    idx: usize,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum AppendBucketResult {
-    Ok,
-    MaxBucketSizeExceeded,
-}
 
 rustler_export_nifs! {
     "Elixir.Discord.SortedSet.NifBridge",
@@ -98,10 +93,10 @@ fn empty<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 
     let initial_set_capacity: usize = (initial_item_capacity / max_bucket_size) + 1;
 
-    let configuration = Configuration {
+    let configuration = Configuration::new(
         max_bucket_size,
         initial_set_capacity,
-    };
+    );
 
     let resource = ResourceArc::new(SortedSetResource(Mutex::new(SortedSet::empty(
         configuration,
@@ -116,10 +111,10 @@ fn new<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 
     let initial_set_capacity: usize = (initial_item_capacity / max_bucket_size) + 1;
 
-    let configuration = Configuration {
+    let configuration = Configuration::new(
         max_bucket_size,
         initial_set_capacity,
-    };
+    );
 
     let resource = ResourceArc::new(SortedSetResource(Mutex::new(SortedSet::new(configuration))));
 
@@ -143,9 +138,12 @@ fn append_bucket<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     };
 
     match set.append_bucket(items) {
-        AppendBucketResult::Ok => Ok(atoms::ok().encode(env)),
-        AppendBucketResult::MaxBucketSizeExceeded => {
-            Ok((atoms::error(), atoms::max_bucket_size_exceeded()).encode(env))
+        Ok(_) => Ok(atoms::ok().encode(env)),
+        Err(e) => {
+            match e {
+                Error::MaxBucketSizeExceeded => Ok((atoms::error(), atoms::max_bucket_size_exceeded()).encode(env)),
+                _ => unreachable!(),
+            }
         }
     }
 }
@@ -167,8 +165,13 @@ fn add<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     };
 
     match set.add(item) {
-        AddResult::Added(idx) => Ok((atoms::ok(), atoms::added(), idx).encode(env)),
-        AddResult::Duplicate(idx) => Ok((atoms::ok(), atoms::duplicate(), idx).encode(env)),
+        Ok(idx) => Ok((atoms::ok(), atoms::added(), idx).encode(env)),
+        Err(e) => {
+            match e {
+                Error::Duplicate(idx) => Ok((atoms::ok(), atoms::duplicate(), idx).encode(env)),
+                _ => unreachable!(),
+            }
+        }
     }
 }
 
@@ -189,8 +192,13 @@ fn remove<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     };
 
     match set.remove(&item) {
-        RemoveResult::Removed(idx) => Ok((atoms::ok(), atoms::removed(), idx).encode(env)),
-        RemoveResult::NotFound => Ok((atoms::error(), atoms::not_found()).encode(env)),
+        Ok(idx) => Ok((atoms::ok(), atoms::removed(), idx).encode(env)),
+        Err(e) => {
+            match e {
+                Error::NotFound => Ok((atoms::error(), atoms::not_found()).encode(env)),
+                _ => unreachable!(),
+            }
+        }
     }
 }
 
@@ -274,12 +282,16 @@ fn find_index<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     };
 
     match set.find_index(&item) {
-        FindResult::Found {
-            bucket_idx: _,
-            inner_idx: _,
+        Ok(FoundData {
             idx,
-        } => Ok((atoms::ok(), idx).encode(env)),
-        FindResult::NotFound => Ok((atoms::error(), atoms::not_found()).encode(env)),
+            ..
+        }) => Ok((atoms::ok(), idx).encode(env)),
+        Err(e) => {
+            match e {
+                Error::NotFound => Ok((atoms::error(), atoms::not_found()).encode(env)),
+                _ => unreachable!(),
+            }
+        }
     }
 }
 
@@ -294,7 +306,7 @@ fn debug<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         Ok(guard) => guard,
     };
 
-    Ok((atoms::ok(), set.debug()).encode(env))
+    Ok((atoms::ok(), format!("{:#?}", set)).encode(env))
 }
 
 fn convert_to_supported_term(term: &Term) -> Option<SupportedTerm> {
