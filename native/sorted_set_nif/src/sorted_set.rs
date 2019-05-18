@@ -54,13 +54,11 @@ impl SortedSet {
         let bucket_idx = self.find_bucket_index(item);
 
         match self.buckets[bucket_idx].data.binary_search(&item) {
-            Ok(idx) => {
-                Ok(FoundData {
-                    bucket_idx,
-                    inner_idx: idx,
-                    idx: self.effective_index(bucket_idx, idx),
-                })
-            }
+            Ok(idx) => Ok(FoundData {
+                bucket_idx,
+                inner_idx: idx,
+                idx: self.effective_index(bucket_idx, idx),
+            }),
             Err(_) => Err(Error::NotFound),
         }
     }
@@ -93,12 +91,12 @@ impl SortedSet {
 
                 Ok(effective_idx)
             }
-            Err(error) => {
-                match error {
-                    Error::Duplicate(idx) => Err(Error::Duplicate(self.effective_index(bucket_idx, idx))),
-                    _ => unreachable!(),
+            Err(error) => match error {
+                Error::Duplicate(idx) => {
+                    Err(Error::Duplicate(self.effective_index(bucket_idx, idx)))
                 }
-            }
+                _ => unreachable!(),
+            },
         }
     }
 
@@ -223,7 +221,6 @@ impl SortedSet {
     pub fn size(&self) -> usize {
         self.size
     }
-
 }
 
 impl Default for SortedSet {
@@ -237,8 +234,8 @@ mod tests {
     use configuration::Configuration;
     use supported_term::SupportedTerm;
     use supported_term::SupportedTerm::{Bitstring, Integer};
-    use SortedSet;
     use Error;
+    use SortedSet;
 
     #[test]
     fn test_sorted() {
@@ -266,7 +263,10 @@ mod tests {
         assert_eq!(set.size(), 1);
 
         let item = Bitstring(String::from("test-item"));
-        assert!(set.add(item).map_err(|err| assert_eq!(err, Error::Duplicate(0))).is_err());
+        assert!(set
+            .add(item)
+            .map_err(|err| assert_eq!(err, Error::Duplicate(0)))
+            .is_err());
         assert_eq!(set.size(), 1);
     }
 

@@ -51,7 +51,7 @@ impl Ord for SupportedTerm {
                     if self_length == other_length {
                         for (self_term, term) in self_inner.iter().zip(inner.iter()) {
                             match self_term.cmp(term) {
-                                Ordering::Equal => {},
+                                Ordering::Equal => {}
                                 o => return o,
                             }
                         }
