@@ -26,7 +26,7 @@ on the SortedSet will perform a linear scan through the buckets to find the buck
 term, then a binary search is done within the bucket to complete the operation.
 
 Why not just a Vector of Terms?  This approach was explored but when the Vector needs to grow
-beyond it's capacity, copying Terms over to the new larger Vector proved to be a performance
+beyond its capacity, copying Terms over to the new larger Vector proved to be a performance
 bottle neck.  Using a Vector of Vectors, the Bucket pointers can be quickly copied when
 additional capacity is required.
 
