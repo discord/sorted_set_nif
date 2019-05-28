@@ -4,8 +4,16 @@ git:
   depth: 3
 env:
   - MIX_ENV=test
+install:
+  - curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+  - source $HOME/.cargo/env
+  - rustup component add rustfmt clippy
+  - mix local.rebar --force
+  - mix local.hex --force
 script:
-  - mix test
+  - source $HOME/.cargo/env
+  - cd native/sorted_set_nif && cargo fmt -- --check && cargo clippy && cargo test && cd -
+  - mix do deps.get, test
 matrix:
   include:
     - name: "Elixir 1.5.3 OTP 20.3.8"

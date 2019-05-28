@@ -15,9 +15,9 @@ pub struct Configuration {
 
 impl Default for Configuration {
     fn default() -> Self {
-        return Self {
+        Self {
             max_bucket_size: 200,
             initial_set_capacity: 0,
-        };
+        }
     }
 }

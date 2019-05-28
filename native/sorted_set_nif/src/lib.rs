@@ -274,11 +274,7 @@ fn find_index<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     };
 
     match set.find_index(&item) {
-        FindResult::Found {
-            bucket_idx: _,
-            inner_idx: _,
-            idx,
-        } => Ok((atoms::ok(), idx).encode(env)),
+        FindResult::Found { idx, .. } => Ok((atoms::ok(), idx).encode(env)),
         FindResult::NotFound => Ok((atoms::error(), atoms::not_found()).encode(env)),
     }
 }
