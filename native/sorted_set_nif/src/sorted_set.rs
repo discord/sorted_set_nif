@@ -61,14 +61,12 @@ impl SortedSet {
         let bucket_idx = self.find_bucket_index(item);
 
         match self.buckets[bucket_idx].data.binary_search(&item) {
-            Ok(idx) => {
-                return FindResult::Found {
-                    bucket_idx,
-                    inner_idx: idx,
-                    idx: self.effective_index(bucket_idx, idx),
-                }
-            }
-            Err(_) => return FindResult::NotFound,
+            Ok(idx) => FindResult::Found {
+                bucket_idx,
+                inner_idx: idx,
+                idx: self.effective_index(bucket_idx, idx),
+            },
+            Err(_) => FindResult::NotFound,
         }
     }
 
@@ -132,7 +130,7 @@ impl SortedSet {
 
                 self.size -= 1;
 
-                return RemoveResult::Removed(idx);
+                RemoveResult::Removed(idx)
             }
             FindResult::NotFound => RemoveResult::NotFound,
         }
@@ -201,7 +199,7 @@ impl SortedSet {
                 }
 
                 // Reduce the amount remaining to be satisied by the number of items in the bucket
-                amount = amount - items_in_bucket;
+                amount -= items_in_bucket;
 
                 // Set index to 0, we only care to preserve the index from seeking for the bucket
                 // that contains the first element.
@@ -235,7 +233,7 @@ impl SortedSet {
 
 impl Default for SortedSet {
     fn default() -> Self {
-        return Self::new(Configuration::default());
+        Self::new(Configuration::default())
     }
 }
 

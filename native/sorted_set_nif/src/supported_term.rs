@@ -133,6 +133,7 @@ impl PartialEq for SupportedTerm {
                         if self_inner[idx] != inner[idx] {
                             return false;
                         }
+                        idx += 1
                     }
 
                     true
@@ -153,6 +154,7 @@ impl PartialEq for SupportedTerm {
                         if self_inner[idx] != inner[idx] {
                             return false;
                         }
+                        idx += 1
                     }
 
                     true
@@ -176,7 +178,7 @@ impl Encoder for SupportedTerm {
                 Err(_) => atoms::error().encode(env),
             },
             SupportedTerm::Tuple(inner) => {
-                let terms: Vec<_> = inner.into_iter().map(|t| t.encode(env)).collect();
+                let terms: Vec<_> = inner.iter().map(|t| t.encode(env)).collect();
                 make_tuple(env, terms.as_ref()).encode(env)
             }
             SupportedTerm::List(inner) => inner.encode(env),

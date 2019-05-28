@@ -36,11 +36,7 @@ impl Bucket {
             self.data.set_len(at);
             other.set_len(other_len);
 
-            ptr::copy_nonoverlapping(
-                self.data.as_ptr().offset(at as isize),
-                other.as_mut_ptr(),
-                other.len(),
-            );
+            ptr::copy_nonoverlapping(self.data.as_ptr().add(at), other.as_mut_ptr(), other.len());
         }
 
         Bucket { data: other }
