@@ -7,14 +7,14 @@ defmodule Discord.SortedSet.Remove.Test do
 
   describe "remove from empty set" do
     property "any supported term returns the set" do
-      check all term <- Generator.supported_term() do
+      check all(term <- Generator.supported_term()) do
         assert set = SortedSet.new()
         assert ^set = SortedSet.remove(set, term)
       end
     end
 
     property "any unsupported term returns an error" do
-      check all term <- Generator.unsupported_term() do
+      check all(term <- Generator.unsupported_term()) do
         assert set = SortedSet.new()
         assert {:error, :unsupported_type} = SortedSet.remove(set, term)
       end
@@ -23,7 +23,7 @@ defmodule Discord.SortedSet.Remove.Test do
 
   describe "remove from a populated set" do
     property "remove an element that is not present does not change the set" do
-      check all [present, missing] <- Generator.supported_terms(unique: true, length: 2) do
+      check all([present, missing] <- Generator.supported_terms(unique: true, length: 2)) do
         set =
           SortedSet.new()
           |> SortedSet.add(present)
@@ -41,7 +41,7 @@ defmodule Discord.SortedSet.Remove.Test do
     end
 
     property "remove an element that is present does change the set" do
-      check all [retain, remove] <- Generator.supported_terms(unique: true, length: 2) do
+      check all([retain, remove] <- Generator.supported_terms(unique: true, length: 2)) do
         set =
           SortedSet.new()
           |> SortedSet.add(retain)
@@ -57,7 +57,7 @@ defmodule Discord.SortedSet.Remove.Test do
     end
 
     property "removing maintains ordering of remaining items" do
-      check all terms <- Generator.supported_terms(unique: true, length: 3) do
+      check all(terms <- Generator.supported_terms(unique: true, length: 3)) do
         [first, second, third] = Enum.sort(terms)
 
         set =
