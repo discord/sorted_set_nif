@@ -25,7 +25,7 @@ defmodule SortedSet.MixProject do
 
   defp deps do
     [
-      {:rustler, "~> 0.18"},
+      {:rustler, "~> 0.21"},
       {:ex_doc, "~> 0.19", only: [:dev], runtime: false},
       {:benchee, "~> 0.13", only: [:dev]},
       {:benchee_html, "~> 0.5", only: [:dev]},
