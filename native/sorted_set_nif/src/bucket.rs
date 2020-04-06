@@ -25,25 +25,9 @@ impl Bucket {
     }
 
     pub fn split(&mut self) -> Bucket {
-        let curr_len = self.data.len();
-        let at = curr_len / 2;
-
-        let other_len = self.data.len() - at;
-        let mut other = Vec::with_capacity(curr_len);
-
-        // Unsafely `set_len` and copy items to `other`.
-        unsafe {
-            self.data.set_len(at);
-            other.set_len(other_len);
-
-            ptr::copy_nonoverlapping(
-                self.data.as_ptr().offset(at as isize),
-                other.as_mut_ptr(),
-                other.len(),
-            );
+        Bucket {
+            data: self.data.split_off( self.data.len() / 2 )
         }
-
-        Bucket { data: other }
     }
 
     pub fn item_compare(&self, item: &SupportedTerm) -> Ordering {
