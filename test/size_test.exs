@@ -25,7 +25,7 @@ defmodule Discord.SortedSet.Size.Test do
       end
     end
 
-    @tag timeout: 240_000
+    @tag timeout: 320_000
     property "set with N unique terms is size N" do
       check all terms <- Generator.supported_terms(unique: true) do
         expected = Enum.count(terms)

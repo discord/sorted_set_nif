@@ -127,7 +127,7 @@ impl PartialEq for SupportedTerm {
                         return false;
                     }
 
-                    let mut idx = 0;
+                    let idx = 0;
 
                     while idx < length {
                         if self_inner[idx] != inner[idx] {
@@ -147,7 +147,7 @@ impl PartialEq for SupportedTerm {
                         return false;
                     }
 
-                    let mut idx = 0;
+                    let idx = 0;
 
                     while idx < length {
                         if self_inner[idx] != inner[idx] {
