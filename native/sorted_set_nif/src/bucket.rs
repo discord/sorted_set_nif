@@ -25,6 +25,10 @@ impl Bucket {
     }
 
     pub fn split(&mut self) -> Bucket {
+        // This code is very similar to Vec::split_off
+        // The difference being that `other` has the
+        // same capacity as `curr_len` rather than
+        // having the capacity of `other_len`.
         let curr_len = self.data.len();
         let at = curr_len / 2;
 
