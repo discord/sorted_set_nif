@@ -7,25 +7,17 @@ end
 Benchee.run(
   %{
     "Sorted Iterative Construction" => fn {size, _, _} ->
-      Enum.reduce(1..size, SortedSet.new(), &SortedSet.add(&2, &1))
-      :ok
+    Enum.reduce(1..size, Discord.SortedSet.new(), &Discord.SortedSet.add(&2, &1))
+    :ok
     end,
     "Sorted Proper Enumerable Construction" => fn {_, sorted, _} ->
-      SortedSet.from_proper_enumerable(sorted)
-      :ok
-    end,
-    "Sorted Proper Enumerable Chunked Construction" => fn {_, sorted, _} ->
-      SortedSet.from_proper_enumerable_chunked(sorted)
-      :ok
+    Discord.SortedSet.from_proper_enumerable(sorted)
+    :ok
     end,
     "Shuffle Enumerable Construction" => fn {_, _, shuffled} ->
-      SortedSet.from_enumerable(shuffled)
-      :ok
+    Discord.SortedSet.from_enumerable(shuffled)
+    :ok
     end,
-    "Shuffle Enumerable Chunked Construction" => fn {_, _, shuffled} ->
-      SortedSet.from_enumerable_chunked(shuffled)
-      :ok
-    end
   },
   inputs: %{
     "1.     5,000 Items" => make_inputs.(5000),
