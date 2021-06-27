@@ -8,12 +8,11 @@ defmodule SortedSet.MixProject do
       version: "1.0.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
-      compilers: [:rustler] ++ Mix.compilers(),
+      compilers: Mix.compilers(),
       deps: deps(),
       docs: docs(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      package: package(),
-      rustler_crates: rustler_crates()
+      package: package()
     ]
   end
 
@@ -25,12 +24,12 @@ defmodule SortedSet.MixProject do
 
   defp deps do
     [
-      {:rustler, "~> 0.18"},
+      {:rustler, "~> 0.22.0"},
       {:ex_doc, "~> 0.19", only: [:dev], runtime: false},
-      {:benchee, "~> 0.13", only: [:dev]},
-      {:benchee_html, "~> 0.5", only: [:dev]},
+      {:benchee, "~> 1.0", only: [:dev]},
+      {:benchee_html, "~> 1.0", only: [:dev]},
       {:stream_data, "~> 0.4", only: [:test]},
-      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false}
+      #{:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false}
     ]
   end
 
@@ -64,16 +63,4 @@ defmodule SortedSet.MixProject do
     ]
   end
 
-  defp rustler_crates do
-    [
-      sorted_set: [
-        path: "native/sorted_set_nif",
-        mode: rustc_mode(Mix.env(), System.get_env("OPTIMIZE_NIF") == "true")
-      ]
-    ]
-  end
-
-  defp rustc_mode(_, true), do: :release
-  defp rustc_mode(:prod, _), do: :release
-  defp rustc_mode(_, _), do: :debug
 end

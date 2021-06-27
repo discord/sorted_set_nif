@@ -167,7 +167,7 @@ defmodule Discord.SortedSet.IndexAdd.Test do
 
     @tag timeout: 240_000
     property "any supported term can be successfully added to the set" do
-      check all term <- Generator.supported_term() do
+      check all(term <- Generator.supported_term()) do
         set = SortedSet.new()
         assert {0, ^set} = SortedSet.index_add(set, term)
 
@@ -327,7 +327,7 @@ defmodule Discord.SortedSet.IndexAdd.Test do
 
     @tag timeout: 240_000
     property "any unsupported term added to the set results in an error" do
-      check all term <- Generator.unsupported_term() do
+      check all(term <- Generator.unsupported_term()) do
         assert set = SortedSet.new()
         assert {:error, :unsupported_type} = SortedSet.index_add(set, term)
         assert SortedSet.size(set) == 0

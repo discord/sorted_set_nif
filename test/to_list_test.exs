@@ -13,7 +13,7 @@ defmodule Discord.SortedSet.ToList.Test do
 
     @tag timeout: 240_000
     property "set of terms is always equivalent to the sorted unique list" do
-      check all terms <- Generator.supported_terms() do
+      check all(terms <- Generator.supported_terms()) do
         expected =
           terms
           |> Enum.sort()

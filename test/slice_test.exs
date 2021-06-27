@@ -27,8 +27,10 @@ defmodule Discord.SortedSet.Slice.Test do
 
   describe "empty set" do
     property "slicing from any starting index at any length is the empty list" do
-      check all start <- positive_integer(),
-                amount <- positive_integer() do
+      check all(
+              start <- positive_integer(),
+              amount <- positive_integer()
+            ) do
         # Subtracting 1 here updates the range of `start` and `amount` to [0, MAX_INT)
         start = start - 1
         amount = amount - 1
@@ -57,8 +59,10 @@ defmodule Discord.SortedSet.Slice.Test do
 
   describe "populated set" do
     property "slicing starting past the size of the set of any size is the empty list" do
-      check all start <- positive_integer(),
-                amount <- positive_integer() do
+      check all(
+              start <- positive_integer(),
+              amount <- positive_integer()
+            ) do
         # Ensure that start is in the range [2, MAX_INT]
         start = max(start, 2)
         amount = amount - 1
