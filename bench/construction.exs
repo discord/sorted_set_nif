@@ -36,12 +36,12 @@ Benchee.run(
     "6. 1,000,000 Items" => make_inputs.(1_000_000)
   },
   formatters: [
-    &Benchee.Formatters.Console.output/1,
-    &Benchee.Formatters.HTML.output/1
+    {Benchee.Formatters.HTML, file: "bench/results/add/html/add.html"},
+    Benchee.Formatters.Console
   ],
-  formatter_options: [
-    html: [file: "bench/results/construction/html/construction.html"]
-  ],
+  save: %{
+    path: "bench/results/add/runs"
+  },
   save: %{
     path: "bench/results/construction/runs"
   }

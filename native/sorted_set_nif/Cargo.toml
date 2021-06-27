@@ -9,6 +9,5 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-rustler = "0.18.0"
-rustler_codegen = "0.18.0"
+rustler = "0.22.0"
 lazy_static = "1.0"

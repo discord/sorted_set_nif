@@ -8,7 +8,7 @@ defmodule Discord.SortedSet.Sorting.Test do
   describe "property test" do
     @tag timeout: 240_000
     property "terms obey elixir sorting rules" do
-      check all terms <- Generator.supported_terms() do
+      check all(terms <- Generator.supported_terms()) do
         elixir_sorted =
           terms
           |> Enum.sort()

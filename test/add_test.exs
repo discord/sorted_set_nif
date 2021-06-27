@@ -161,7 +161,7 @@ defmodule Discord.SortedSet.Add.Test do
     end
 
     property "any supported term can be successfully added to the set" do
-      check all term <- Generator.supported_term() do
+      check all(term <- Generator.supported_term()) do
         set = SortedSet.new()
         assert ^set = SortedSet.add(set, term)
 
@@ -312,7 +312,7 @@ defmodule Discord.SortedSet.Add.Test do
     end
 
     property "any unsupported term added to the set results in an error" do
-      check all term <- Generator.unsupported_term() do
+      check all(term <- Generator.unsupported_term()) do
         assert set = SortedSet.new()
         assert {:error, :unsupported_type} = SortedSet.add(set, term)
         assert SortedSet.size(set) == 0

@@ -133,6 +133,7 @@ impl PartialEq for SupportedTerm {
                         if self_inner[idx] != inner[idx] {
                             return false;
                         }
+                        idx += 1;
                     }
 
                     true
@@ -153,6 +154,7 @@ impl PartialEq for SupportedTerm {
                         if self_inner[idx] != inner[idx] {
                             return false;
                         }
+                        idx += 1;
                     }
 
                     true
