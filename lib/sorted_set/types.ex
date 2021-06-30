@@ -103,6 +103,20 @@ defmodule Discord.SortedSet.Types do
   @type nif_remove_result :: {:ok, :removed, index :: integer()} | {:error, :not_found}
 
   @typedoc """
+  Responses returned from the NIF when slicing into the SortedSet
+
+  `{:ok, items :: [term]}` is returned by the NIF to indicate that the slice was executed
+  successfully and the list of items (possibly empty) is the result.
+
+  `{:error, :index_out_of_bounds}` indicates that the start index or the amount requested would
+  have placed an index out of the upper-bounds for the data structure.
+
+  In the `:index_out_of_bounds` case the SortedSet module will translate this into an empty list,
+  same as if the caller attempted to slice from off the end of the set.
+  """
+  @type nif_slice_result :: {:ok, [term]} | {:error, :index_out_of_bounds}
+
+  @typedoc """
   Only a subset of Elixir types are supported by the nif, the semantic type `supported_term` can
   be used as a shorthand for terms of these supported types.
   """
