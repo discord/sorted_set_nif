@@ -264,8 +264,11 @@ defmodule Discord.SortedSet do
           [Types.supported_term()] | Types.common_errors()
   def slice(set, start, amount) do
     case NifBridge.slice(set, start, amount) do
-      items when is_list(items) ->
+      {:ok, items} ->
         items
+
+      {:error, :index_out_of_bounds} ->
+        []
 
       other ->
         other

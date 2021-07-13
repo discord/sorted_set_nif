@@ -127,15 +127,7 @@ impl PartialEq for SupportedTerm {
                         return false;
                     }
 
-                    let mut idx = 0;
-
-                    while idx < length {
-                        if self_inner[idx] != inner[idx] {
-                            return false;
-                        }
-                    }
-
-                    true
+                    self_inner.iter().zip(inner.iter()).all(|(a, b)| a == b)
                 }
                 _ => false,
             },
@@ -147,15 +139,7 @@ impl PartialEq for SupportedTerm {
                         return false;
                     }
 
-                    let mut idx = 0;
-
-                    while idx < length {
-                        if self_inner[idx] != inner[idx] {
-                            return false;
-                        }
-                    }
-
-                    true
+                    self_inner.iter().zip(inner.iter()).all(|(a, b)| a == b)
                 }
                 _ => false,
             },

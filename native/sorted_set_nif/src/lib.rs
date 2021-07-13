@@ -83,6 +83,7 @@ rustler_export_nifs! {
         ("size", 1, size),
         ("slice", 3, slice),
         ("to_list", 1, to_list),
+        ("usize_max", 0, usize_max),
     ],
     Some(load)
 }
@@ -227,7 +228,11 @@ fn at<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         Err(_) => return Ok((atoms::error(), atoms::bad_reference()).encode(env)),
         Ok(r) => r,
     };
-    let index: usize = args[1].decode()?;
+
+    let index: usize = match args[1].decode() {
+        Err(_) => return Ok((atoms::error(), atoms::index_out_of_bounds()).encode(env)),
+        Ok(index) => index
+    };
 
     let set = match resource.0.try_lock() {
         Err(_) => return Ok((atoms::error(), atoms::lock_fail()).encode(env)),
@@ -246,15 +251,22 @@ fn slice<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         Ok(r) => r,
     };
 
-    let start: usize = args[1].decode()?;
-    let amount: usize = args[2].decode()?;
+    let start: usize = match args[1].decode() {
+        Err(_) => return Ok((atoms::error(), atoms::index_out_of_bounds()).encode(env)),
+        Ok(start) => start,
+    };
 
     let set = match resource.0.try_lock() {
         Err(_) => return Ok((atoms::error(), atoms::lock_fail()).encode(env)),
         Ok(guard) => guard,
     };
 
-    Ok(set.slice(start, amount).encode(env))
+    let amount: usize = match args[2].decode() {
+        Err(_) => set.size(),
+        Ok(amount) => amount,
+    };
+
+    Ok((atoms::ok(), set.slice(start, amount)).encode(env))
 }
 
 fn find_index<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
@@ -295,6 +307,11 @@ fn debug<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     };
 
     Ok((atoms::ok(), set.debug()).encode(env))
+}
+
+
+fn usize_max<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    Ok(usize::MAX.encode(env))
 }
 
 fn convert_to_supported_term(term: &Term) -> Option<SupportedTerm> {

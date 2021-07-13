@@ -114,14 +114,14 @@ impl SortedSet {
                 idx,
             } => {
                 if self.size == 0 {
-                    panic!(format!(
+                    panic!(
                         "Just found item {:?} but size is 0, internal structure error \n
                                     Bucket Index: {:?} \n
                                     Inner Index: {:?} \n
                                     Effective Index: {:?}\n
                                     Buckets: {:?}",
                         item, bucket_idx, inner_idx, idx, self.buckets
-                    ));
+                    );
                 }
 
                 self.buckets[bucket_idx].data.remove(inner_idx);
@@ -272,13 +272,13 @@ mod tests {
         let item = Bitstring(String::from("test-item"));
         match set.add(item) {
             Added(idx) => assert_eq!(idx, 0),
-            Duplicate(idx) => panic!(format!("Unexpected Duplicate({}) on initial add", idx)),
+            Duplicate(idx) => panic!("Unexpected Duplicate({}) on initial add", idx),
         };
         assert_eq!(set.size(), 1);
 
         let item = Bitstring(String::from("test-item"));
         match set.add(item) {
-            Added(idx) => panic!(format!("Unexpected Added({}) on subsequent add", idx)),
+            Added(idx) => panic!("Unexpected Added({}) on subsequent add", idx),
             Duplicate(idx) => assert_eq!(idx, 0),
         }
         assert_eq!(set.size(), 1);

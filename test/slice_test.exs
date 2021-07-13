@@ -53,6 +53,14 @@ defmodule Discord.SortedSet.Slice.Test do
     test "starting greater than 0, amount 10, is the empty list" do
       assert SortedSet.slice(empty_set(), 1, 10) == []
     end
+
+    test "starting greater than usize::MAX, amount 0, is the empty list" do
+      assert SortedSet.slice(empty_set(), SortedSet.NifBridge.usize_max() + 1, 0) == []
+    end
+
+    test "starting greater than usize::MAX, amount 10, is the empty list" do
+      assert SortedSet.slice(empty_set(), SortedSet.NifBridge.usize_max() + 1, 10) == []
+    end
   end
 
   describe "populated set" do
@@ -95,6 +103,14 @@ defmodule Discord.SortedSet.Slice.Test do
 
     test "over-exhausted from terminal" do
       assert SortedSet.slice(populated_set(), 7, 10) == [16, 18]
+    end
+
+    test "starting greater than usize::MAX" do
+      assert SortedSet.slice(populated_set(), SortedSet.NifBridge.usize_max() + 1, 10) == []
+    end
+
+    test "taking more than usize::MAX returns the rest of the set" do
+      assert SortedSet.slice(populated_set(), 7, SortedSet.NifBridge.usize_max() + 1) == [16, 18]
     end
   end
 end

@@ -43,7 +43,7 @@ defmodule Discord.SortedSet.Test.Support.Generator do
         StreamData.one_of([
           inner,
           StreamData.tuple({inner}),
-          StreamData.list_of(inner)
+          StreamData.nonempty(StreamData.list_of(inner))
         ])
       )
     )
