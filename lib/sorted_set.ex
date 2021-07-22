@@ -92,7 +92,7 @@ defmodule Discord.SortedSet do
     |> Enum.chunk_every(bucket_size - 1)
     |> Enum.reduce_while(set, fn chunk, set ->
       case NifBridge.append_bucket(set, chunk) do
-       {:ok, :ok} ->
+        {:ok, :ok} ->
           {:cont, set}
 
         {:error, _} = error ->
@@ -117,6 +117,7 @@ defmodule Discord.SortedSet do
     case NifBridge.add(set, item) do
       {:ok, _} ->
         set
+
       other ->
         other
     end
@@ -212,6 +213,7 @@ defmodule Discord.SortedSet do
     case NifBridge.size(set) do
       {:ok, size} ->
         size
+
       other ->
         other
     end
@@ -322,4 +324,8 @@ defmodule Discord.SortedSet do
   @spec default_bucket_size() :: pos_integer()
   def default_bucket_size, do: @default_bucket_size
 
+  @doc """
+  Returns information about this NIF's memory allocations, as reported by jemalloc.
+  """
+  defdelegate jemalloc_allocation_info, to: NifBridge
 end

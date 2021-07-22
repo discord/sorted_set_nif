@@ -25,11 +25,13 @@ defmodule SortedSet.MixProject do
   defp deps do
     [
       {:rustler, "~> 0.22.0"},
+      {:jemalloc_info,
+       git: "https://github.com/discord/jemalloc_info", branch: "main", app: false},
       {:ex_doc, "~> 0.19", only: [:dev], runtime: false},
       {:benchee, "~> 1.0", only: [:dev]},
       {:benchee_html, "~> 1.0", only: [:dev]},
       {:stream_data, "~> 0.4", only: [:test]},
-      #{:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false}
     ]
   end
 
@@ -38,7 +40,7 @@ defmodule SortedSet.MixProject do
       name: "SortedSet",
       extras: ["README.md"],
       main: "readme",
-      source_url: "https://github.com/discordapp/sorted_set"
+      source_url: "https://github.com/discord/sorted_set"
     ]
   end
 
@@ -58,9 +60,8 @@ defmodule SortedSet.MixProject do
       maintainers: ["Discord Core Infrastructure"],
       licenses: ["MIT"],
       links: %{
-        "GitHub" => "https://github.com/discordapp/sorted_set_nif"
+        "GitHub" => "https://github.com/discord/sorted_set_nif"
       }
     ]
   end
-
 end

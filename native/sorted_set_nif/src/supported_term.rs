@@ -1,11 +1,13 @@
-use atoms;
+use std::cmp::min;
+use std::cmp::Ordering;
+
 use rustler::types::atom::Atom;
 use rustler::types::tuple::make_tuple;
 use rustler::Encoder;
 use rustler::Env;
 use rustler::Term;
-use std::cmp::min;
-use std::cmp::Ordering;
+
+use crate::atoms;
 
 /// SupportedTerm is an enum that covers all the Erlang / Elixir term types that can be stored in
 /// a SortedSet.
@@ -84,13 +86,7 @@ impl Ord for SupportedTerm {
                         }
                     }
 
-                    if self_length == other_length {
-                        Ordering::Equal
-                    } else if self_length < other_length {
-                        Ordering::Less
-                    } else {
-                        Ordering::Greater
-                    }
+                    self_length.cmp(&other_length)
                 }
                 _ => Ordering::Less,
             },
@@ -178,7 +174,7 @@ impl Encoder for SupportedTerm {
                 Err(_) => atoms::error().encode(env),
             },
             SupportedTerm::Tuple(inner) => {
-                let terms: Vec<_> = inner.into_iter().map(|t| t.encode(env)).collect();
+                let terms: Vec<_> = inner.iter().map(|t| t.encode(env)).collect();
                 make_tuple(env, terms.as_ref()).encode(env)
             }
             SupportedTerm::List(inner) => inner.encode(env),

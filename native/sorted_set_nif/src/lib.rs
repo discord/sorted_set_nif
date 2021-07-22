@@ -5,13 +5,19 @@ mod configuration;
 mod sorted_set;
 mod supported_term;
 
-use configuration::Configuration;
+use std::sync::Mutex;
+
+use jemallocator::Jemalloc;
 use rustler::resource::ResourceArc;
 use rustler::types::tuple::get_tuple;
-use rustler::{Env, Term, Atom};
-use sorted_set::SortedSet;
-use std::sync::Mutex;
-use supported_term::SupportedTerm;
+use rustler::{Atom, Env, Term};
+
+use crate::configuration::Configuration;
+use crate::sorted_set::SortedSet;
+use crate::supported_term::SupportedTerm;
+
+#[global_allocator]
+static GLOBAL_ALLOCATOR: Jemalloc = Jemalloc;
 
 mod atoms {
     rustler::atoms! {
@@ -68,7 +74,23 @@ pub enum AppendBucketResult {
     MaxBucketSizeExceeded,
 }
 
-rustler::init!("Elixir.Discord.SortedSet.NifBridge", [empty, new, append_bucket, size, add, remove, at, slice, find_index, debug, to_list], load = load);
+rustler::init!(
+    "Elixir.Discord.SortedSet.NifBridge",
+    [
+        empty,
+        new,
+        append_bucket,
+        size,
+        add,
+        remove,
+        at,
+        slice,
+        find_index,
+        debug,
+        to_list
+    ],
+    load = load
+);
 
 fn load(env: Env, _info: Term) -> bool {
     rustler::resource!(SortedSetResource, env);
@@ -77,7 +99,6 @@ fn load(env: Env, _info: Term) -> bool {
 
 #[rustler::nif]
 fn empty(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSetArc) {
-
     let initial_set_capacity: usize = (initial_item_capacity / max_bucket_size) + 1;
 
     let configuration = Configuration {
@@ -93,8 +114,7 @@ fn empty(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedS
 }
 
 #[rustler::nif]
-fn new(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSetArc)  {
-
+fn new(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSetArc) {
     let initial_set_capacity: usize = (initial_item_capacity / max_bucket_size) + 1;
 
     let configuration = Configuration {
@@ -108,11 +128,10 @@ fn new(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSet
 }
 
 #[rustler::nif]
-fn append_bucket(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<Atom, Atom>  {
-
+fn append_bucket(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<Atom, Atom> {
     let items = match convert_to_supported_term(&term) {
         Some(SupportedTerm::List(terms)) => terms,
-        _ => return Err(atoms::unsupported_type())
+        _ => return Err(atoms::unsupported_type()),
     };
 
     let mut set = match resource.0.try_lock() {
@@ -122,15 +141,12 @@ fn append_bucket(resource: ResourceArc<SortedSetResource>, term: Term) -> Result
 
     match set.append_bucket(items) {
         AppendBucketResult::Ok => Ok(atoms::ok()),
-        AppendBucketResult::MaxBucketSizeExceeded => {
-            Err(atoms::max_bucket_size_exceeded())
-        }
+        AppendBucketResult::MaxBucketSizeExceeded => Err(atoms::max_bucket_size_exceeded()),
     }
 }
 
 #[rustler::nif]
 fn add(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom, usize), Atom> {
-
     let item = match convert_to_supported_term(&term) {
         None => return Err(atoms::unsupported_type()),
         Some(term) => term,
@@ -143,13 +159,12 @@ fn add(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom, us
 
     match set.add(item) {
         AddResult::Added(idx) => Ok((atoms::added(), idx)),
-        AddResult::Duplicate(idx) => Ok((atoms::duplicate(), idx))
+        AddResult::Duplicate(idx) => Ok((atoms::duplicate(), idx)),
     }
 }
 
 #[rustler::nif]
 fn remove(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom, usize), Atom> {
-
     let item = match convert_to_supported_term(&term) {
         None => return Err(atoms::unsupported_type()),
         Some(term) => term,
@@ -168,7 +183,6 @@ fn remove(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom,
 
 #[rustler::nif]
 fn size(resource: ResourceArc<SortedSetResource>) -> Result<usize, Atom> {
-
     let set = match resource.0.try_lock() {
         Err(_) => return Err(atoms::lock_fail()),
         Ok(guard) => guard,
@@ -179,7 +193,6 @@ fn size(resource: ResourceArc<SortedSetResource>) -> Result<usize, Atom> {
 
 #[rustler::nif]
 fn to_list(resource: ResourceArc<SortedSetResource>) -> Result<Vec<SupportedTerm>, Atom> {
-
     let set = match resource.0.try_lock() {
         Err(_) => return Err(atoms::lock_fail()),
         Ok(guard) => guard,
@@ -190,7 +203,6 @@ fn to_list(resource: ResourceArc<SortedSetResource>) -> Result<Vec<SupportedTerm
 
 #[rustler::nif]
 fn at(resource: ResourceArc<SortedSetResource>, index: usize) -> Result<SupportedTerm, Atom> {
-
     let set = match resource.0.try_lock() {
         Err(_) => return Err(atoms::lock_fail()),
         Ok(guard) => guard,
@@ -203,7 +215,11 @@ fn at(resource: ResourceArc<SortedSetResource>, index: usize) -> Result<Supporte
 }
 
 #[rustler::nif]
-fn slice(resource: ResourceArc<SortedSetResource>, start: usize, amount: usize) -> Result<Vec<SupportedTerm>, Atom> {
+fn slice(
+    resource: ResourceArc<SortedSetResource>,
+    start: usize,
+    amount: usize,
+) -> Result<Vec<SupportedTerm>, Atom> {
     let set = match resource.0.try_lock() {
         Err(_) => return Err(atoms::lock_fail()),
         Ok(guard) => guard,
@@ -214,7 +230,6 @@ fn slice(resource: ResourceArc<SortedSetResource>, start: usize, amount: usize) 
 
 #[rustler::nif]
 fn find_index(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<usize, Atom> {
-
     let item = match convert_to_supported_term(&term) {
         None => return Err(atoms::unsupported_type()),
         Some(term) => term,
@@ -237,7 +252,6 @@ fn find_index(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<us
 
 #[rustler::nif]
 fn debug(resource: ResourceArc<SortedSetResource>) -> Result<String, Atom> {
-
     let set = match resource.0.try_lock() {
         Err(_) => return Err(atoms::lock_fail()),
         Ok(guard) => guard,
