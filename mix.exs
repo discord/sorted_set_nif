@@ -30,7 +30,7 @@ defmodule SortedSet.MixProject do
       {:benchee, "~> 1.0", only: [:dev]},
       {:benchee_html, "~> 1.0", only: [:dev]},
       {:stream_data, "~> 0.4", only: [:test]},
-      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0.0", only: [:dev], runtime: false}
     ]
   end
 
