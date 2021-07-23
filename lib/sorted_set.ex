@@ -273,6 +273,9 @@ defmodule Discord.SortedSet do
       {:ok, items} when is_list(items) ->
         items
 
+      {:error, :index_out_of_bounds} ->
+        []
+
       other ->
         other
     end

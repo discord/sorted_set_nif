@@ -87,7 +87,8 @@ rustler::init!(
         slice,
         find_index,
         debug,
-        to_list
+        to_list,
+        usize_max
     ],
     load = load
 );
@@ -202,7 +203,14 @@ fn to_list(resource: ResourceArc<SortedSetResource>) -> Result<Vec<SupportedTerm
 }
 
 #[rustler::nif]
-fn at(resource: ResourceArc<SortedSetResource>, index: usize) -> Result<SupportedTerm, Atom> {
+fn at<'a>(
+    resource: ResourceArc<SortedSetResource>,
+    index: Term<'a>,
+) -> Result<SupportedTerm, Atom> {
+    let index: usize = match index.decode() {
+        Ok(index) => index,
+        Err(_) => return Err(atoms::index_out_of_bounds()),
+    };
     let set = match resource.0.try_lock() {
         Err(_) => return Err(atoms::lock_fail()),
         Ok(guard) => guard,
@@ -215,14 +223,22 @@ fn at(resource: ResourceArc<SortedSetResource>, index: usize) -> Result<Supporte
 }
 
 #[rustler::nif]
-fn slice(
+fn slice<'a>(
     resource: ResourceArc<SortedSetResource>,
-    start: usize,
-    amount: usize,
+    start: Term<'a>,
+    amount: Term<'a>,
 ) -> Result<Vec<SupportedTerm>, Atom> {
+    let start: usize = match start.decode() {
+        Ok(start) => start,
+        Err(_) => return Err(atoms::index_out_of_bounds()),
+    };
     let set = match resource.0.try_lock() {
         Err(_) => return Err(atoms::lock_fail()),
         Ok(guard) => guard,
+    };
+    let amount: usize = match amount.decode() {
+        Ok(amount) => amount,
+        Err(_) => set.size(),
     };
 
     Ok(set.slice(start, amount))
@@ -258,6 +274,11 @@ fn debug(resource: ResourceArc<SortedSetResource>) -> Result<String, Atom> {
     };
 
     Ok(set.debug())
+}
+
+#[rustler::nif]
+fn usize_max() -> usize {
+    usize::MAX
 }
 
 fn convert_to_supported_term(term: &Term) -> Option<SupportedTerm> {
