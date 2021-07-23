@@ -10,6 +10,6 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-jemalloc-info = { git = "https://github.com/discord/jemalloc_info", branch = "main" }
+jemalloc-info = "0.1"
 jemallocator = { version = "0.3.2", features = ["disable_initial_exec_tls", "stats"] }
 rustler = "0.22.0"
