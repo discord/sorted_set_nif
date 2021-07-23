@@ -28,6 +28,11 @@ erl_crash.dump
 # Ignore the output of benchmarking
 /bench/results
 
+# Ignore rust lockfile since this is a library
+Cargo.lock
+
+# Rust compilation directory
+target
+
 *.iml
 .idea/
-target/

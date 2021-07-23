@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
 use std::ptr;
-use supported_term::SupportedTerm;
-use AddResult;
-use AddResult::{Added, Duplicate};
+
+use crate::supported_term::SupportedTerm;
+use crate::AddResult::{self, Added, Duplicate};
 
 #[derive(Debug, PartialEq)]
 pub struct Bucket {
@@ -36,11 +36,7 @@ impl Bucket {
             self.data.set_len(at);
             other.set_len(other_len);
 
-            ptr::copy_nonoverlapping(
-                self.data.as_ptr().offset(at as isize),
-                other.as_mut_ptr(),
-                other.len(),
-            );
+            ptr::copy_nonoverlapping(self.data.as_ptr().add(at), other.as_mut_ptr(), other.len());
         }
 
         Bucket { data: other }
@@ -69,9 +65,8 @@ impl Bucket {
 
 #[cfg(test)]
 mod tests {
-    use bucket::Bucket;
+    use super::*;
     use std::cmp::Ordering;
-    use supported_term::SupportedTerm;
     use AddResult;
 
     #[test]

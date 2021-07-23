@@ -11,6 +11,7 @@ defmodule Discord.SortedSet.NifBridge do
   interface.
   """
   use Rustler, otp_app: :sorted_set_nif, crate: "sorted_set_nif"
+  use JemallocInfo.RustlerMixin
 
   alias Discord.SortedSet
   alias Discord.SortedSet.Types

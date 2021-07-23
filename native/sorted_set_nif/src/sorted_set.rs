@@ -1,11 +1,9 @@
-use bucket::Bucket;
-use configuration::Configuration;
 use std::cmp::min;
-use supported_term::SupportedTerm;
-use AddResult;
-use AppendBucketResult;
-use FindResult;
-use RemoveResult;
+
+use crate::bucket::Bucket;
+use crate::configuration::Configuration;
+use crate::supported_term::SupportedTerm;
+use crate::{AddResult, AppendBucketResult, FindResult, RemoveResult};
 
 #[derive(Debug)]
 pub struct SortedSet {
@@ -61,14 +59,12 @@ impl SortedSet {
         let bucket_idx = self.find_bucket_index(item);
 
         match self.buckets[bucket_idx].data.binary_search(&item) {
-            Ok(idx) => {
-                return FindResult::Found {
-                    bucket_idx,
-                    inner_idx: idx,
-                    idx: self.effective_index(bucket_idx, idx),
-                }
-            }
-            Err(_) => return FindResult::NotFound,
+            Ok(idx) => FindResult::Found {
+                bucket_idx,
+                inner_idx: idx,
+                idx: self.effective_index(bucket_idx, idx),
+            },
+            Err(_) => FindResult::NotFound,
         }
     }
 
@@ -132,7 +128,7 @@ impl SortedSet {
 
                 self.size -= 1;
 
-                return RemoveResult::Removed(idx);
+                RemoveResult::Removed(idx)
             }
             FindResult::NotFound => RemoveResult::NotFound,
         }
@@ -201,7 +197,7 @@ impl SortedSet {
                 }
 
                 // Reduce the amount remaining to be satisied by the number of items in the bucket
-                amount = amount - items_in_bucket;
+                amount -= items_in_bucket;
 
                 // Set index to 0, we only care to preserve the index from seeking for the bucket
                 // that contains the first element.
@@ -235,18 +231,18 @@ impl SortedSet {
 
 impl Default for SortedSet {
     fn default() -> Self {
-        return Self::new(Configuration::default());
+        Self::new(Configuration::default())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use configuration::Configuration;
-    use supported_term::SupportedTerm;
-    use supported_term::SupportedTerm::{Bitstring, Integer};
-    use AddResult::{Added, Duplicate};
-    use RemoveResult::{NotFound, Removed};
-    use SortedSet;
+    use crate::configuration::Configuration;
+    use crate::supported_term::SupportedTerm;
+    use crate::supported_term::SupportedTerm::{Bitstring, Integer};
+    use crate::AddResult::{Added, Duplicate};
+    use crate::RemoveResult::{NotFound, Removed};
+    use crate::SortedSet;
 
     #[test]
     fn test_sorted() {
