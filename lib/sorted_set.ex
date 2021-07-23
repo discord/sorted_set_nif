@@ -92,7 +92,7 @@ defmodule Discord.SortedSet do
     |> Enum.chunk_every(bucket_size - 1)
     |> Enum.reduce_while(set, fn chunk, set ->
       case NifBridge.append_bucket(set, chunk) do
-        :ok ->
+       {:ok, :ok} ->
           {:cont, set}
 
         {:error, _} = error ->
@@ -115,9 +115,8 @@ defmodule Discord.SortedSet do
   @spec add(set :: t(), item :: Types.supported_term()) :: t() | Types.common_errors()
   def add(set, item) do
     case NifBridge.add(set, item) do
-      {:ok, _, _} ->
+      {:ok, _} ->
         set
-
       other ->
         other
     end
@@ -138,10 +137,10 @@ defmodule Discord.SortedSet do
           {index :: non_neg_integer() | nil, t()} | Types.common_errors()
   def index_add(set, item) do
     case NifBridge.add(set, item) do
-      {:ok, :added, index} ->
+      {:ok, {:added, index}} ->
         {index, set}
 
-      {:ok, :duplicate, _} ->
+      {:ok, {:duplicate, _}} ->
         {nil, set}
 
       other ->
@@ -164,7 +163,7 @@ defmodule Discord.SortedSet do
   @spec remove(set :: t(), item :: any()) :: t() | Types.common_errors()
   def remove(set, item) do
     case NifBridge.remove(set, item) do
-      {:ok, :removed, _} ->
+      {:ok, {:removed, _}} ->
         set
 
       {:error, :not_found} ->
@@ -191,7 +190,7 @@ defmodule Discord.SortedSet do
           {index :: non_neg_integer(), t()} | Types.common_errors()
   def index_remove(set, item) do
     case NifBridge.remove(set, item) do
-      {:ok, :removed, index} ->
+      {:ok, {:removed, index}} ->
         {index, set}
 
       {:error, :not_found} ->
@@ -210,7 +209,12 @@ defmodule Discord.SortedSet do
   """
   @spec size(set :: t()) :: non_neg_integer() | Types.common_errors()
   def size(set) do
-    NifBridge.size(set)
+    case NifBridge.size(set) do
+      {:ok, size} ->
+        size
+      other ->
+        other
+    end
   end
 
   @doc """
@@ -222,7 +226,7 @@ defmodule Discord.SortedSet do
   @spec to_list(set :: t()) :: [Types.supported_term()] | Types.common_errors()
   def to_list(set) do
     case NifBridge.to_list(set) do
-      result when is_list(result) ->
+      {:ok, result} when is_list(result) ->
         result
 
       other ->
@@ -264,7 +268,7 @@ defmodule Discord.SortedSet do
           [Types.supported_term()] | Types.common_errors()
   def slice(set, start, amount) do
     case NifBridge.slice(set, start, amount) do
-      items when is_list(items) ->
+      {:ok, items} when is_list(items) ->
         items
 
       other ->
@@ -317,4 +321,5 @@ defmodule Discord.SortedSet do
   """
   @spec default_bucket_size() :: pos_integer()
   def default_bucket_size, do: @default_bucket_size
+
 end

@@ -27,3 +27,7 @@ erl_crash.dump
 
 # Ignore the output of benchmarking
 /bench/results
+
+*.iml
+.idea/
+target/

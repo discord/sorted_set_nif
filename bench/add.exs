@@ -74,11 +74,8 @@ Benchee.run(
     end
   end,
   formatters: [
-    &Benchee.Formatters.Console.output/1,
-    &Benchee.Formatters.HTML.output/1
-  ],
-  formatter_options: [
-    html: [file: "bench/results/add/html/add.html"]
+    {Benchee.Formatters.HTML, file: "bench/results/add/html/add.html"},
+    Benchee.Formatters.Console
   ],
   save: %{
     path: "bench/results/add/runs"
