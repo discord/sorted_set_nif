@@ -44,8 +44,8 @@ jobs:
       working-directory: ./native/sorted_set_nif
     - run: mix format --check-formatted
 
-  build:
-    name: Build
+  test:
+    name: Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -70,7 +70,8 @@ jobs:
       with:
         elixir-version: ${{ matrix.beam-pair.elixir-version }}
         otp-version: ${{ matrix.beam-pair.otp-version }}
-    - run: cargo build
+    - run: cargo test
       working-directory: ./native/sorted_set_nif
     - run: mix deps.get
     - run: mix compile
+    - run: mix test
