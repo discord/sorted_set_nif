@@ -23,7 +23,7 @@ defmodule Discord.SortedSet.At.Test do
       assert SortedSet.size(populated_set) == 3
       assert SortedSet.to_list(populated_set) == [1, 2, 3]
 
-      {:ok, empty_set: empty_set, populated_set: populated_set}
+      {:ok, empty_set: empty_set, populated_set: populated_set, usize_max: SortedSet.NifBridge.usize_max()}
     end
 
     test "any index in empty set returns default", ctx do
@@ -38,6 +38,10 @@ defmodule Discord.SortedSet.At.Test do
       assert SortedSet.at(ctx.populated_set, 0, :default) == 1
       assert SortedSet.at(ctx.populated_set, 1, :default) == 2
       assert SortedSet.at(ctx.populated_set, 2, :default) == 3
+    end
+
+    test "index greater than usize::MAX returns default", ctx do
+      assert SortedSet.at(ctx.populated_set, ctx.usize_max + 1, :default) == :default
     end
   end
 end

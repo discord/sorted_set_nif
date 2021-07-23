@@ -82,8 +82,7 @@ defmodule Discord.SortedSet.NifBridge do
   @doc """
   Retrieve a slice of starting at the start index and taking up to amount
   """
-  @spec slice(set :: SortedSet.t(), start :: non_neg_integer(), amount :: non_neg_integer()) ::
-          [any()] | Types.common_errors()
+  @spec slice(set :: SortedSet.t(), start :: non_neg_integer(), amount :: non_neg_integer()) :: Types.nif_slice_result()
   def slice(_set, _start, _amount), do: :erlang.nif_error(:nif_not_loaded)
 
   @doc """
@@ -111,4 +110,12 @@ defmodule Discord.SortedSet.NifBridge do
   """
   @spec debug(set :: SortedSet.t()) :: String.t() | Types.common_errors()
   def debug(_set), do: :erlang.nif_error(:nif_not_loaded)
+
+  @doc """
+  Returns the usize::MAX for the current platform.
+
+  This utility is mainly used in testing so that tests can run on platforms with different usize.
+  """
+  @spec usize_max() :: integer()
+  def usize_max(), do: :erlang.nif_error(:nif_not_loaded)
 end
