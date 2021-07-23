@@ -203,10 +203,7 @@ fn to_list(resource: ResourceArc<SortedSetResource>) -> Result<Vec<SupportedTerm
 }
 
 #[rustler::nif]
-fn at<'a>(
-    resource: ResourceArc<SortedSetResource>,
-    index: Term<'a>,
-) -> Result<SupportedTerm, Atom> {
+fn at(resource: ResourceArc<SortedSetResource>, index: Term) -> Result<SupportedTerm, Atom> {
     let index: usize = match index.decode() {
         Ok(index) => index,
         Err(_) => return Err(atoms::index_out_of_bounds()),
