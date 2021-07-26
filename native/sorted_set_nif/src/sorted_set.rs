@@ -295,13 +295,7 @@ mod tests {
         assert_eq!(*set.at(1).unwrap(), Bitstring(String::from("bbb")));
         assert_eq!(*set.at(2).unwrap(), Bitstring(String::from("ccc")));
 
-        match set.at(3) {
-            Some(item) => panic!(format!(
-                "Unexpected item found after end of set: {:?}",
-                item
-            )),
-            None => assert!(true),
-        };
+        assert_eq!(set.at(3), None);
     }
 
     #[test]
@@ -359,13 +353,7 @@ mod tests {
 
         let item = Bitstring(String::from("zzz"));
 
-        match set.remove(&item) {
-            Removed(idx) => panic!(
-                "Unexpected Removed({}) for item that should not be present",
-                idx
-            ),
-            NotFound => assert!(true),
-        }
+        assert_eq!(set.remove(&item), NotFound);
 
         assert_eq!(
             set.to_vec(),
