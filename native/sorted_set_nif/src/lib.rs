@@ -38,9 +38,15 @@ mod atoms {
         unsupported_type,
         not_found,
         index_out_of_bounds,
-        max_bucket_size_exceeded
+        max_bucket_size_exceeded,
     }
 }
+
+// This is an unintuitive export.
+// While `jemalloc_info::allocation_info` looks like a function,
+// it's actually a struct due to the rustler nif export.
+#[allow(non_camel_case_types)]
+type jemalloc_allocation_info = jemalloc_info::allocation_info;
 
 pub struct SortedSetResource(Mutex<SortedSet>);
 
@@ -87,7 +93,8 @@ rustler::init!(
         slice,
         find_index,
         debug,
-        to_list
+        to_list,
+        jemalloc_allocation_info,
     ],
     load = load
 );
