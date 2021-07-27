@@ -38,7 +38,7 @@ mod atoms {
         unsupported_type,
         not_found,
         index_out_of_bounds,
-        max_bucket_size_exceeded
+        max_bucket_size_exceeded,
     }
 }
 
@@ -87,7 +87,8 @@ rustler::init!(
         slice,
         find_index,
         debug,
-        to_list
+        to_list,
+        jemalloc_info::jemalloc_allocation_info,
     ],
     load = load
 );
