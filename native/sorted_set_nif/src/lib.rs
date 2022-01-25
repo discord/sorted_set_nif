@@ -7,7 +7,6 @@ mod supported_term;
 
 use std::sync::Mutex;
 
-use jemallocator::Jemalloc;
 use rustler::resource::ResourceArc;
 use rustler::types::tuple::get_tuple;
 use rustler::{Atom, Env, Term};
@@ -16,6 +15,10 @@ use crate::configuration::Configuration;
 use crate::sorted_set::SortedSet;
 use crate::supported_term::SupportedTerm;
 
+#[cfg(not(target_os = "macos"))]
+use jemallocator::Jemalloc;
+
+#[cfg(not(target_os = "macos"))]
 #[global_allocator]
 static GLOBAL_ALLOCATOR: Jemalloc = Jemalloc;
 
@@ -73,25 +76,6 @@ pub enum AppendBucketResult {
     Ok,
     MaxBucketSizeExceeded,
 }
-
-rustler::init!(
-    "Elixir.Discord.SortedSet.NifBridge",
-    [
-        empty,
-        new,
-        append_bucket,
-        size,
-        add,
-        remove,
-        at,
-        slice,
-        find_index,
-        debug,
-        to_list,
-        jemalloc_info::jemalloc_allocation_info,
-    ],
-    load = load
-);
 
 fn load(env: Env, _info: Term) -> bool {
     rustler::resource!(SortedSetResource, env);
@@ -313,3 +297,53 @@ fn convert_to_supported_term(term: &Term) -> Option<SupportedTerm> {
         None
     }
 }
+
+
+#[cfg(target_os = "macos")]
+macro_rules! init_rustler {
+    () => {
+        rustler::init!(
+            "Elixir.Discord.SortedSet.NifBridge",
+            [
+                empty,
+                new,
+                append_bucket,
+                size,
+                add,
+                remove,
+                at,
+                slice,
+                find_index,
+                debug,
+                to_list,
+            ],
+            load = load
+        );
+    };
+}
+
+#[cfg(not(target_os = "macos"))]
+macro_rules! init_rustler {
+    () => {
+        rustler::init!(
+            "Elixir.Discord.SortedSet.NifBridge",
+            [
+                empty,
+                new,
+                append_bucket,
+                size,
+                add,
+                remove,
+                at,
+                slice,
+                find_index,
+                debug,
+                to_list,
+                jemalloc_info::jemalloc_allocation_info,
+            ],
+            load = load
+        );
+    };
+}
+
+init_rustler!();
