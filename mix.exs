@@ -5,7 +5,7 @@ defmodule SortedSet.MixProject do
     [
       app: :sorted_set_nif,
       name: "SortedSet",
-      version: "1.1.0",
+      version: "1.2.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       compilers: Mix.compilers(),
