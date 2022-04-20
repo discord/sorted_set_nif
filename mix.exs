@@ -39,7 +39,7 @@ defmodule SortedSet.MixProject do
       name: "SortedSet",
       extras: ["README.md"],
       main: "readme",
-      source_url: "https://github.com/discord/sorted_set"
+      source_url: "https://github.com/discord/sorted_set_nif"
     ]
   end
 
