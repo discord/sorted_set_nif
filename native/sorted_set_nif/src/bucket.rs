@@ -67,7 +67,6 @@ impl Bucket {
 mod tests {
     use super::*;
     use std::cmp::Ordering;
-    use AddResult;
 
     #[test]
     fn test_item_compare_empty_bucket() {
