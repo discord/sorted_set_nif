@@ -1,8 +1,8 @@
 [package]
 name = "sorted_set_nif"
-version = "1.2.0"
+version = "1.3.0"
 authors = []
-edition = "2018"
+edition = "2024"
 
 [lib]
 name = "sorted_set_nif"
@@ -10,6 +10,9 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-jemalloc-info = "0.3"
-jemallocator = { version = "0.3.2", features = ["disable_initial_exec_tls", "stats"] }
-rustler = "0.22.0"
+jemalloc-info = { git = "https://github.com/marinac-dev/jemalloc_info" }
+jemallocator = { version = "0.5.4", features = [
+  "disable_initial_exec_tls",
+  "stats",
+] }
+rustler = "0.36.2"

@@ -8,8 +8,8 @@ mod supported_term;
 use std::sync::Mutex;
 
 use jemallocator::Jemalloc;
-use rustler::resource::ResourceArc;
 use rustler::types::tuple::get_tuple;
+use rustler::ResourceArc;
 use rustler::{Atom, Env, Term};
 
 use crate::configuration::Configuration;
@@ -74,27 +74,11 @@ pub enum AppendBucketResult {
     MaxBucketSizeExceeded,
 }
 
-rustler::init!(
-    "Elixir.Discord.SortedSet.NifBridge",
-    [
-        empty,
-        new,
-        append_bucket,
-        size,
-        add,
-        remove,
-        at,
-        slice,
-        find_index,
-        debug,
-        to_list,
-        jemalloc_info::jemalloc_allocation_info,
-    ],
-    load = load
-);
+rustler::init!("Elixir.Discord.SortedSet.NifBridge", load = load);
 
+#[allow(non_local_definitions)]
 fn load(env: Env, _info: Term) -> bool {
-    rustler::resource!(SortedSetResource, env);
+    assert!(rustler::resource!(SortedSetResource, env));
     true
 }
 

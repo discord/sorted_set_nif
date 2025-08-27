@@ -5,8 +5,8 @@ defmodule SortedSet.MixProject do
     [
       app: :sorted_set_nif,
       name: "SortedSet",
-      version: "1.2.0",
-      elixir: "~> 1.5",
+      version: "1.3.0",
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       compilers: Mix.compilers(),
       deps: deps(),
@@ -24,13 +24,13 @@ defmodule SortedSet.MixProject do
 
   defp deps do
     [
-      {:rustler, "~> 0.22.0"},
-      {:jemalloc_info, "~> 0.3", app: false},
-      {:ex_doc, "~> 0.19", only: [:dev], runtime: false},
-      {:benchee, "~> 1.0", only: [:dev]},
+      {:rustler, "~> 0.36.2", runtime: false},
+      {:jemalloc_info, git: "https://github.com/marinac-dev/jemalloc_info.git", app: false},
+      {:ex_doc, "~> 0.38.1", only: [:dev], runtime: false},
+      {:benchee, "~> 1.4.0", only: [:dev]},
       {:benchee_html, "~> 1.0", only: [:dev]},
-      {:stream_data, "~> 0.4", only: [:test]},
-      {:dialyxir, "~> 1.0.0", only: [:dev], runtime: false}
+      {:stream_data, "~> 1.2.0", only: [:test]},
+      {:dialyxir, "~> 1.4.5", only: [:dev], runtime: false}
     ]
   end
 
@@ -39,7 +39,7 @@ defmodule SortedSet.MixProject do
       name: "SortedSet",
       extras: ["README.md"],
       main: "readme",
-      source_url: "https://github.com/discord/sorted_set"
+      source_url: "https://github.com/marinac-dev/sorted_set"
     ]
   end
 
@@ -55,11 +55,20 @@ defmodule SortedSet.MixProject do
     [
       name: :sorted_set_nif,
       description: "SortedSet is a fast and efficient Rust backed sorted set.",
-      files: ["lib", "native/sorted_set_nif/Cargo.toml", "native/sorted_set_nif/README.md", "native/sorted_set_nif/src", ".formatter.exs", "README*", "LICENSE*", "mix.exs"],
-      maintainers: ["Discord Core Infrastructure"],
+      files: [
+        "lib",
+        "native/sorted_set_nif/Cargo.toml",
+        "native/sorted_set_nif/README.md",
+        "native/sorted_set_nif/src",
+        ".formatter.exs",
+        "README*",
+        "LICENSE*",
+        "mix.exs"
+      ],
+      maintainers: ["Discord Core Infrastructure", "marinac-dev"],
       licenses: ["MIT"],
       links: %{
-        "GitHub" => "https://github.com/discord/sorted_set_nif"
+        "GitHub" => "https://github.com/marinac-dev/sorted_set_nif"
       }
     ]
   end

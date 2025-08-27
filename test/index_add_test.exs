@@ -71,8 +71,8 @@ defmodule Discord.SortedSet.IndexAdd.Test do
 
     test "charlist" do
       assert set = SortedSet.new()
-      assert {0, ^set} = SortedSet.index_add(set, 'test')
-      assert SortedSet.to_list(set) == ['test']
+      assert {0, ^set} = SortedSet.index_add(set, ~c"test")
+      assert SortedSet.to_list(set) == [~c"test"]
     end
 
     test "tuple of integer" do
@@ -95,26 +95,26 @@ defmodule Discord.SortedSet.IndexAdd.Test do
 
     test "tuple of charlist" do
       assert set = SortedSet.new()
-      assert {0, ^set} = SortedSet.index_add(set, {'a', 'b', 'c'})
-      assert SortedSet.to_list(set) == [{'a', 'b', 'c'}]
+      assert {0, ^set} = SortedSet.index_add(set, {~c"a", ~c"b", ~c"c"})
+      assert SortedSet.to_list(set) == [{~c"a", ~c"b", ~c"c"}]
     end
 
     test "tuple of list" do
       assert set = SortedSet.new()
-      assert {0, ^set} = SortedSet.index_add(set, {[1, :a, "a", 'a'], [2, :b, "b", 'b']})
-      assert SortedSet.to_list(set) == [{[1, :a, "a", 'a'], [2, :b, "b", 'b']}]
+      assert {0, ^set} = SortedSet.index_add(set, {[1, :a, "a", ~c"a"], [2, :b, "b", ~c"b"]})
+      assert SortedSet.to_list(set) == [{[1, :a, "a", ~c"a"], [2, :b, "b", ~c"b"]}]
     end
 
     test "tuple of mixed" do
       assert set = SortedSet.new()
-      assert {0, ^set} = SortedSet.index_add(set, {1, :a, "a", 'a', [4, 5, 6]})
-      assert SortedSet.to_list(set) == [{1, :a, "a", 'a', [4, 5, 6]}]
+      assert {0, ^set} = SortedSet.index_add(set, {1, :a, "a", ~c"a", [4, 5, 6]})
+      assert SortedSet.to_list(set) == [{1, :a, "a", ~c"a", [4, 5, 6]}]
     end
 
     test "nested tuples" do
       assert set = SortedSet.new()
-      assert {0, ^set} = SortedSet.index_add(set, {{1, :a, "a"}, {2, :b, {'c', [4, 5, 6]}}})
-      assert SortedSet.to_list(set) == [{{1, :a, "a"}, {2, :b, {'c', [4, 5, 6]}}}]
+      assert {0, ^set} = SortedSet.index_add(set, {{1, :a, "a"}, {2, :b, {~c"c", [4, 5, 6]}}})
+      assert SortedSet.to_list(set) == [{{1, :a, "a"}, {2, :b, {~c"c", [4, 5, 6]}}}]
     end
 
     test "list of integer" do
@@ -137,8 +137,8 @@ defmodule Discord.SortedSet.IndexAdd.Test do
 
     test "list of charlist" do
       assert set = SortedSet.new()
-      assert {0, ^set} = SortedSet.index_add(set, ['a', 'b', 'c'])
-      assert SortedSet.to_list(set) == [['a', 'b', 'c']]
+      assert {0, ^set} = SortedSet.index_add(set, [~c"a", ~c"b", ~c"c"])
+      assert SortedSet.to_list(set) == [[~c"a", ~c"b", ~c"c"]]
     end
 
     test "list of tuple" do
@@ -149,20 +149,20 @@ defmodule Discord.SortedSet.IndexAdd.Test do
 
     test "list of list" do
       assert set = SortedSet.new()
-      assert {0, ^set} = SortedSet.index_add(set, [[1, :a, "a", 'a'], [2, :b, "b", 'b']])
-      assert SortedSet.to_list(set) == [[[1, :a, "a", 'a'], [2, :b, "b", 'b']]]
+      assert {0, ^set} = SortedSet.index_add(set, [[1, :a, "a", ~c"a"], [2, :b, "b", ~c"b"]])
+      assert SortedSet.to_list(set) == [[[1, :a, "a", ~c"a"], [2, :b, "b", ~c"b"]]]
     end
 
     test "list of mixed" do
       assert set = SortedSet.new()
-      assert {0, ^set} = SortedSet.index_add(set, [1, :a, "a", 'a', [4, 5, 6]])
-      assert SortedSet.to_list(set) == [[1, :a, "a", 'a', [4, 5, 6]]]
+      assert {0, ^set} = SortedSet.index_add(set, [1, :a, "a", ~c"a", [4, 5, 6]])
+      assert SortedSet.to_list(set) == [[1, :a, "a", ~c"a", [4, 5, 6]]]
     end
 
     test "nested lists" do
       assert set = SortedSet.new()
-      assert {0, ^set} = SortedSet.index_add(set, [[1, :a, "a"], [2, :b, ['c', {4, 5, 6}]]])
-      assert SortedSet.to_list(set) == [[[1, :a, "a"], [2, :b, ['c', {4, 5, 6}]]]]
+      assert {0, ^set} = SortedSet.index_add(set, [[1, :a, "a"], [2, :b, [~c"c", {4, 5, 6}]]])
+      assert SortedSet.to_list(set) == [[[1, :a, "a"], [2, :b, [~c"c", {4, 5, 6}]]]]
     end
 
     @tag timeout: 240_000
