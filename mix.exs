@@ -26,11 +26,11 @@ defmodule SortedSet.MixProject do
     [
       {:rustler, "~> 0.37.1", runtime: false},
       {:jemalloc_info, git: "https://github.com/marinac-dev/jemalloc_info.git", app: false},
-      {:ex_doc, "~> 0.38.1", only: [:dev], runtime: false},
-      {:benchee, "~> 1.4.0", only: [:dev]},
-      {:benchee_html, "~> 1.0", only: [:dev]},
+      {:ex_doc, "~> 0.39.1", only: [:dev], runtime: false},
+      {:benchee, "~> 1.5.0", only: [:dev]},
+      {:benchee_html, "~> 1.0.1", only: [:dev]},
       {:stream_data, "~> 1.2.0", only: [:test]},
-      {:dialyxir, "~> 1.4.5", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.4.6", only: [:dev], runtime: false}
     ]
   end
 
