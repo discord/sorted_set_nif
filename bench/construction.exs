@@ -7,7 +7,7 @@ end
 Benchee.run(
   %{
     "Sorted Iterative Construction" => fn {size, _, _} ->
-      Enum.reduce(1..size, SortedSet.new(), &SortedSet.add(&2, &1))
+      Enum.reduce(1..size, Discord.SortedSet.new(), &Discord.SortedSet.add(&2, &1))
       :ok
     end,
     "Sorted Proper Enumerable Construction" => fn {_, sorted, _} ->
