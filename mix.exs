@@ -24,7 +24,7 @@ defmodule SortedSet.MixProject do
 
   defp deps do
     [
-      {:rustler, "~> 0.36.2", runtime: false},
+      {:rustler, "~> 0.37.1", runtime: false},
       {:jemalloc_info, git: "https://github.com/marinac-dev/jemalloc_info.git", app: false},
       {:ex_doc, "~> 0.38.1", only: [:dev], runtime: false},
       {:benchee, "~> 1.4.0", only: [:dev]},
