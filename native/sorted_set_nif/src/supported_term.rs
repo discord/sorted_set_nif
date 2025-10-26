@@ -23,7 +23,7 @@ use crate::atoms;
 ///
 /// Types that are supported but not explicitly listed
 ///   - Boolean (Note that booleans in Erlang / Elixir are just atoms)
-#[derive(Eq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub enum SupportedTerm {
     Integer(i64),
     Atom(String),
@@ -101,67 +101,6 @@ impl Ord for SupportedTerm {
 impl PartialOrd for SupportedTerm {
     fn partial_cmp(&self, other: &SupportedTerm) -> Option<Ordering> {
         Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for SupportedTerm {
-    fn eq(&self, other: &SupportedTerm) -> bool {
-        match self {
-            SupportedTerm::Integer(self_inner) => match other {
-                SupportedTerm::Integer(inner) => self_inner == inner,
-                _ => false,
-            },
-            SupportedTerm::Atom(self_inner) => match other {
-                SupportedTerm::Atom(inner) => self_inner == inner,
-                _ => false,
-            },
-            SupportedTerm::Tuple(self_inner) => match other {
-                SupportedTerm::Tuple(inner) => {
-                    let length = self_inner.len();
-
-                    if length != inner.len() {
-                        return false;
-                    }
-
-                    let mut idx = 0;
-
-                    while idx < length {
-                        if self_inner[idx] != inner[idx] {
-                            return false;
-                        }
-                        idx += 1;
-                    }
-
-                    true
-                }
-                _ => false,
-            },
-            SupportedTerm::List(self_inner) => match other {
-                SupportedTerm::List(inner) => {
-                    let length = self_inner.len();
-
-                    if length != inner.len() {
-                        return false;
-                    }
-
-                    let mut idx = 0;
-
-                    while idx < length {
-                        if self_inner[idx] != inner[idx] {
-                            return false;
-                        }
-                        idx += 1;
-                    }
-
-                    true
-                }
-                _ => false,
-            },
-            SupportedTerm::Bitstring(self_inner) => match other {
-                SupportedTerm::Bitstring(inner) => self_inner == inner,
-                _ => false,
-            },
-        }
     }
 }
 

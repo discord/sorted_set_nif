@@ -3,7 +3,8 @@ use std::cmp::min;
 use crate::bucket::Bucket;
 use crate::configuration::Configuration;
 use crate::supported_term::SupportedTerm;
-use crate::{AddResult, AppendBucketResult, FindResult, RemoveResult};
+use crate::Error;
+use crate::FoundData;
 
 #[derive(Debug)]
 pub struct SortedSet {
@@ -14,10 +15,6 @@ pub struct SortedSet {
 
 impl SortedSet {
     pub fn empty(configuration: Configuration) -> SortedSet {
-        if configuration.max_bucket_size < 1 {
-            panic!("SortedSet max_bucket_size must be greater than 0");
-        }
-
         let buckets = Vec::with_capacity(configuration.initial_set_capacity);
 
         SortedSet {
@@ -33,15 +30,15 @@ impl SortedSet {
         result
     }
 
-    pub fn append_bucket(&mut self, items: Vec<SupportedTerm>) -> AppendBucketResult {
-        if self.configuration.max_bucket_size <= items.len() {
-            return AppendBucketResult::MaxBucketSizeExceeded;
+    pub fn append_bucket(&mut self, items: Vec<SupportedTerm>) -> Result<(), Error> {
+        if self.configuration.max_bucket_size.get() <= items.len() {
+            return Err(Error::MaxBucketSizeExceeded);
         }
 
         self.size += items.len();
         self.buckets.push(Bucket { data: items });
 
-        AppendBucketResult::Ok
+        Ok(())
     }
 
     #[inline]
@@ -55,16 +52,16 @@ impl SortedSet {
         }
     }
 
-    pub fn find_index(&self, item: &SupportedTerm) -> FindResult {
+    pub fn find_index(&self, item: &SupportedTerm) -> Result<FoundData, Error> {
         let bucket_idx = self.find_bucket_index(item);
 
-        match self.buckets[bucket_idx].data.binary_search(&item) {
-            Ok(idx) => FindResult::Found {
+        match self.buckets[bucket_idx].data.binary_search(item) {
+            Ok(idx) => Ok(FoundData {
                 bucket_idx,
                 inner_idx: idx,
                 idx: self.effective_index(bucket_idx, idx),
-            },
-            Err(_) => FindResult::NotFound,
+            }),
+            Err(_) => Err(Error::NotFound),
         }
     }
 
@@ -79,36 +76,33 @@ impl SortedSet {
         result
     }
 
-    pub fn add(&mut self, item: SupportedTerm) -> AddResult {
+    pub fn add(&mut self, item: SupportedTerm) -> Result<usize, Error> {
         let bucket_idx = self.find_bucket_index(&item);
 
         match self.buckets[bucket_idx].add(item) {
-            AddResult::Added(idx) => {
+            Ok(idx) => {
                 let effective_idx = self.effective_index(bucket_idx, idx);
                 let bucket_len = self.buckets[bucket_idx].len();
 
-                if bucket_len >= self.configuration.max_bucket_size {
+                if bucket_len >= self.configuration.max_bucket_size.get() {
                     let new_bucket = self.buckets[bucket_idx].split();
                     self.buckets.insert(bucket_idx + 1, new_bucket);
                 }
 
                 self.size += 1;
 
-                AddResult::Added(effective_idx)
+                Ok(effective_idx)
             }
-            AddResult::Duplicate(idx) => {
-                AddResult::Duplicate(self.effective_index(bucket_idx, idx))
+            Err(Error::Duplicate(idx)) => {
+                Err(Error::Duplicate(self.effective_index(bucket_idx, idx)))
             }
+            Err(e) => Err(e),
         }
     }
 
-    pub fn remove(&mut self, item: &SupportedTerm) -> RemoveResult {
+    pub fn remove(&mut self, item: &SupportedTerm) -> Result<usize, Error> {
         match self.find_index(item) {
-            FindResult::Found {
-                bucket_idx,
-                inner_idx,
-                idx,
-            } => {
+            Ok(FoundData { bucket_idx, inner_idx, idx }) => {
                 if self.size == 0 {
                     panic!(
                         "Just found item {:?} but size is 0, internal structure error \n
@@ -128,9 +122,10 @@ impl SortedSet {
 
                 self.size -= 1;
 
-                RemoveResult::Removed(idx)
+                Ok(idx)
             }
-            FindResult::NotFound => RemoveResult::NotFound,
+            Err(Error::NotFound) => Err(Error::NotFound),
+            Err(e) => Err(e),
         }
     }
 
@@ -213,7 +208,7 @@ impl SortedSet {
     }
 
     pub fn to_vec(&self) -> Vec<SupportedTerm> {
-        let mut new_vec = Vec::new();
+        let mut new_vec = Vec::with_capacity(self.size());
         for bucket in self.buckets.iter() {
             new_vec.extend(bucket.data.clone().into_iter());
         }
@@ -240,8 +235,7 @@ mod tests {
     use crate::configuration::Configuration;
     use crate::supported_term::SupportedTerm;
     use crate::supported_term::SupportedTerm::{Bitstring, Integer};
-    use crate::AddResult::{Added, Duplicate};
-    use crate::RemoveResult::{NotFound, Removed};
+    use crate::Error;
     use crate::SortedSet;
 
     #[test]
@@ -267,25 +261,24 @@ mod tests {
 
         let item = Bitstring(String::from("test-item"));
         match set.add(item) {
-            Added(idx) => assert_eq!(idx, 0),
-            Duplicate(idx) => panic!(format!("Unexpected Duplicate({}) on initial add", idx)),
+            Ok(idx) => assert_eq!(idx, 0),
+            Err(Error::Duplicate(idx)) => panic!("Unexpected Duplicate({}) on initial add", idx),
+            Err(e) => panic!("Unexpected error: {:?}", e),
         };
         assert_eq!(set.size(), 1);
 
         let item = Bitstring(String::from("test-item"));
         match set.add(item) {
-            Added(idx) => panic!(format!("Unexpected Added({}) on subsequent add", idx)),
-            Duplicate(idx) => assert_eq!(idx, 0),
+            Ok(idx) => panic!("Unexpected Added({}) on subsequent add", idx),
+            Err(Error::Duplicate(idx)) => assert_eq!(idx, 0),
+            Err(e) => panic!("Unexpected error: {:?}", e),
         }
         assert_eq!(set.size(), 1);
     }
 
     #[test]
     fn test_retrieving_an_item() {
-        let mut set: SortedSet = SortedSet::new(Configuration {
-            max_bucket_size: 3,
-            ..Configuration::default()
-        });
+        let mut set: SortedSet = SortedSet::new(Configuration::with_max_bucket_size(3));
 
         set.add(Bitstring(String::from("aaa")));
         set.add(Bitstring(String::from("bbb")));
@@ -296,11 +289,11 @@ mod tests {
         assert_eq!(*set.at(2).unwrap(), Bitstring(String::from("ccc")));
 
         match set.at(3) {
-            Some(item) => panic!(format!(
+            Some(item) => panic!(
                 "Unexpected item found after end of set: {:?}",
                 item
-            )),
-            None => assert!(true),
+            ),
+            None => {},
         };
     }
 
@@ -308,9 +301,9 @@ mod tests {
     fn test_removing_a_present_item() {
         let mut set: SortedSet = SortedSet::default();
 
-        set.add(Bitstring(String::from("aaa")));
-        set.add(Bitstring(String::from("bbb")));
-        set.add(Bitstring(String::from("ccc")));
+        set.add(Bitstring(String::from("aaa"))).unwrap();
+        set.add(Bitstring(String::from("bbb"))).unwrap();
+        set.add(Bitstring(String::from("ccc"))).unwrap();
 
         assert_eq!(
             set.to_vec(),
@@ -324,11 +317,12 @@ mod tests {
         let item = Bitstring(String::from("bbb"));
 
         match set.remove(&item) {
-            Removed(idx) => assert_eq!(idx, 1),
-            NotFound => panic!(format!(
+            Ok(idx) => assert_eq!(idx, 1),
+            Err(Error::NotFound) => panic!(
                 "Unexpected NotFound for item that should be present: {:?}",
                 item
-            )),
+            ),
+            Err(e) => panic!("Unexpected error: {:?}", e),
         }
 
         assert_eq!(
@@ -344,9 +338,9 @@ mod tests {
     fn test_removing_a_not_found_item() {
         let mut set: SortedSet = SortedSet::default();
 
-        set.add(Bitstring(String::from("aaa")));
-        set.add(Bitstring(String::from("bbb")));
-        set.add(Bitstring(String::from("ccc")));
+        set.add(Bitstring(String::from("aaa"))).unwrap();
+        set.add(Bitstring(String::from("bbb"))).unwrap();
+        set.add(Bitstring(String::from("ccc"))).unwrap();
 
         assert_eq!(
             set.to_vec(),
@@ -360,11 +354,12 @@ mod tests {
         let item = Bitstring(String::from("zzz"));
 
         match set.remove(&item) {
-            Removed(idx) => panic!(
+            Ok(idx) => panic!(
                 "Unexpected Removed({}) for item that should not be present",
                 idx
             ),
-            NotFound => assert!(true),
+            Err(Error::NotFound) => {},
+            Err(e) => panic!("Unexpected error: {:?}", e),
         }
 
         assert_eq!(
@@ -379,16 +374,13 @@ mod tests {
 
     #[test]
     fn test_removing_from_non_leading_bucket() {
-        let mut set: SortedSet = SortedSet::new(Configuration {
-            max_bucket_size: 3,
-            ..Configuration::default()
-        });
+        let mut set: SortedSet = SortedSet::new(Configuration::with_max_bucket_size(3));
 
-        set.add(Bitstring(String::from("aaa")));
-        set.add(Bitstring(String::from("bbb")));
-        set.add(Bitstring(String::from("ccc")));
-        set.add(Bitstring(String::from("ddd")));
-        set.add(Bitstring(String::from("eee")));
+        set.add(Bitstring(String::from("aaa"))).unwrap();
+        set.add(Bitstring(String::from("bbb"))).unwrap();
+        set.add(Bitstring(String::from("ccc"))).unwrap();
+        set.add(Bitstring(String::from("ddd"))).unwrap();
+        set.add(Bitstring(String::from("eee"))).unwrap();
 
         assert_eq!(
             set.to_vec(),
@@ -404,11 +396,12 @@ mod tests {
         let item = Bitstring(String::from("ddd"));
 
         match set.remove(&item) {
-            Removed(idx) => assert_eq!(idx, 3),
-            NotFound => panic!(format!(
+            Ok(idx) => assert_eq!(idx, 3),
+            Err(Error::NotFound) => panic!(
                 "Unexpected NotFound for item that should be present: {:?}",
                 item
-            )),
+            ),
+            Err(e) => panic!("Unexpected error: {:?}", e),
         }
 
         assert_eq!(
@@ -424,10 +417,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_in_empty_set() {
-        let set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         assert_eq!(set.find_bucket_index(&Integer(10)), 0);
     }
@@ -436,11 +426,11 @@ mod tests {
     fn test_removing_decrements_the_size_on_successful_removal() {
         let mut set = SortedSet::new(Configuration::default());
 
-        set.add(Bitstring(String::from("aaa")));
-        set.add(Bitstring(String::from("bbb")));
-        set.add(Bitstring(String::from("ccc")));
-        set.add(Bitstring(String::from("ddd")));
-        set.add(Bitstring(String::from("eee")));
+        set.add(Bitstring(String::from("aaa"))).unwrap();
+        set.add(Bitstring(String::from("bbb"))).unwrap();
+        set.add(Bitstring(String::from("ccc"))).unwrap();
+        set.add(Bitstring(String::from("ddd"))).unwrap();
+        set.add(Bitstring(String::from("eee"))).unwrap();
 
         // First assert that the size is what we expect
         assert_eq!(set.size(), 5);
@@ -466,11 +456,11 @@ mod tests {
     fn test_multiple_removes_of_the_same_value_do_not_decrement_size() {
         let mut set = SortedSet::new(Configuration::default());
 
-        set.add(Bitstring(String::from("aaa")));
-        set.add(Bitstring(String::from("bbb")));
-        set.add(Bitstring(String::from("ccc")));
-        set.add(Bitstring(String::from("ddd")));
-        set.add(Bitstring(String::from("eee")));
+        set.add(Bitstring(String::from("aaa"))).unwrap();
+        set.add(Bitstring(String::from("bbb"))).unwrap();
+        set.add(Bitstring(String::from("ccc"))).unwrap();
+        set.add(Bitstring(String::from("ddd"))).unwrap();
+        set.add(Bitstring(String::from("eee"))).unwrap();
 
         // First assert that the size is what we expect
         assert_eq!(set.size(), 5);
@@ -490,11 +480,11 @@ mod tests {
     fn test_removing_item_not_present_does_nothing() {
         let mut set = SortedSet::new(Configuration::default());
 
-        set.add(Bitstring(String::from("aaa")));
-        set.add(Bitstring(String::from("bbb")));
-        set.add(Bitstring(String::from("ccc")));
-        set.add(Bitstring(String::from("ddd")));
-        set.add(Bitstring(String::from("eee")));
+        set.add(Bitstring(String::from("aaa"))).unwrap();
+        set.add(Bitstring(String::from("bbb"))).unwrap();
+        set.add(Bitstring(String::from("ccc"))).unwrap();
+        set.add(Bitstring(String::from("ddd"))).unwrap();
+        set.add(Bitstring(String::from("eee"))).unwrap();
 
         // First assert that the size is what we expect
         assert_eq!(set.size(), 5);
@@ -524,10 +514,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_less_than_first_item_in_set() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -538,10 +525,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_equal_to_first_item_in_set() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -552,10 +536,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_in_first_bucket_unique() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -566,10 +547,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_in_first_bucket_duplicate() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -580,10 +558,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_between_buckets_selects_the_right_hand_bucket() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -594,10 +569,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_in_interior_bucket_unique() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -608,10 +580,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_in_interior_bucket_duplicate() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -622,10 +591,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_in_last_bucket_unique() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -636,10 +602,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_in_last_bucket_duplicate() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -650,10 +613,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_equal_to_last_item_in_set() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -664,10 +624,7 @@ mod tests {
 
     #[test]
     fn test_find_bucket_when_greater_than_last_item_in_set() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -678,10 +635,7 @@ mod tests {
 
     #[test]
     fn test_slice_starting_at_0_amount_0() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -707,10 +661,7 @@ mod tests {
 
     #[test]
     fn test_slice_single_bucket_satisfiable() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -721,10 +672,7 @@ mod tests {
 
     #[test]
     fn test_slice_multi_cell_satisfiable() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -743,10 +691,7 @@ mod tests {
 
     #[test]
     fn test_slice_exactly_exhausted_from_non_terminal() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -767,10 +712,7 @@ mod tests {
 
     #[test]
     fn test_slice_over_exhausted_from_non_terminal() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -791,10 +733,7 @@ mod tests {
 
     #[test]
     fn test_slice_exactly_exhausted_from_terminal() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));
@@ -808,10 +747,7 @@ mod tests {
 
     #[test]
     fn test_slice_over_exhausted_from_terminal() {
-        let mut set = SortedSet::new(Configuration {
-            max_bucket_size: 5,
-            ..Configuration::default()
-        });
+        let mut set = SortedSet::new(Configuration::with_max_bucket_size(5));
 
         for i in 1..10 {
             set.add(Integer(i * 2));

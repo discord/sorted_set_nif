@@ -33,10 +33,10 @@ defmodule Discord.SortedSet.Types do
   @typedoc """
   Success responses returned from the NIF when adding an element to the set.
 
-  `{:ok, :added, index :: integer()}` is returned by the NIF to indicate that the add was executed
+  `{:ok, {:ok, :added, index :: integer()}}` is returned by the NIF to indicate that the add was executed
   successfully and a new element was inserted into the SortedSet at the specified index.
 
-  `{:ok, :duplicate, index :: integer()}` is returned by the NIF to indicate that the add was
+  `{:ok, {:ok, :duplicate, index :: integer()}}` is returned by the NIF to indicate that the add was
   executed successfully but the element already existed within the SortedSet, the index of the
   existing element is returned.
 
@@ -46,7 +46,7 @@ defmodule Discord.SortedSet.Types do
   allow the Elixir wrapper to implement both with the same underlying mechanism
   """
   @type nif_add_result ::
-          {:ok, :added, index :: integer()} | {:ok, :duplicate, index :: integer()}
+          {:ok, {:ok, :added, index :: integer()}} | {:ok, {:ok, :duplicate, index :: integer()}}
 
   @typedoc """
   Response returned from the NIF when appending a bucket.

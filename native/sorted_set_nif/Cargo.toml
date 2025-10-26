@@ -10,9 +10,14 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+thiserror = "2.0"
 jemalloc-info = { git = "https://github.com/marinac-dev/jemalloc_info" }
 jemallocator = { version = "0.5.4", features = [
   "disable_initial_exec_tls",
   "stats",
 ] }
 rustler = "0.36.2"
+
+[profile.release]
+lto = true
+codegen-units = 1

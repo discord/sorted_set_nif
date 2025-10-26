@@ -27,7 +27,6 @@ mod atoms {
 
         // Resource Atoms
         bad_reference,
-        lock_fail,
 
         // Success Atoms
         added,
@@ -46,32 +45,22 @@ pub struct SortedSetResource(Mutex<SortedSet>);
 
 type SortedSetArc = ResourceArc<SortedSetResource>;
 
-#[derive(Debug, PartialEq)]
-pub enum AddResult {
-    Added(usize),
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+pub enum Error {
+    #[error("Duplicate at index: {0}")]
     Duplicate(usize),
-}
-
-#[derive(Debug, PartialEq)]
-pub enum RemoveResult {
-    Removed(usize),
+    #[error("Not found at index: {0}")]
+    NotFoundAtIndex(usize),
+    #[error("Not found")]
     NotFound,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum FindResult {
-    Found {
-        bucket_idx: usize,
-        inner_idx: usize,
-        idx: usize,
-    },
-    NotFound,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum AppendBucketResult {
-    Ok,
+    #[error("Max bucket size exceeded")]
     MaxBucketSizeExceeded,
+}
+
+pub struct FoundData {
+    pub bucket_idx: usize,
+    pub inner_idx: usize,
+    pub idx: usize,
 }
 
 rustler::init!("Elixir.Discord.SortedSet.NifBridge", load = load);
@@ -86,10 +75,7 @@ fn load(env: Env, _info: Term) -> bool {
 fn empty(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSetArc) {
     let initial_set_capacity: usize = (initial_item_capacity / max_bucket_size) + 1;
 
-    let configuration = Configuration {
-        max_bucket_size,
-        initial_set_capacity,
-    };
+    let configuration = Configuration::new(max_bucket_size, initial_set_capacity);
 
     let resource = ResourceArc::new(SortedSetResource(Mutex::new(SortedSet::empty(
         configuration,
@@ -102,10 +88,7 @@ fn empty(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedS
 fn new(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSetArc) {
     let initial_set_capacity: usize = (initial_item_capacity / max_bucket_size) + 1;
 
-    let configuration = Configuration {
-        max_bucket_size,
-        initial_set_capacity,
-    };
+    let configuration = Configuration::new(max_bucket_size, initial_set_capacity);
 
     let resource = ResourceArc::new(SortedSetResource(Mutex::new(SortedSet::new(configuration))));
 
@@ -119,32 +102,28 @@ fn append_bucket(resource: ResourceArc<SortedSetResource>, term: Term) -> Result
         _ => return Err(atoms::unsupported_type()),
     };
 
-    let mut set = match resource.0.try_lock() {
-        Err(_) => return Err(atoms::lock_fail()),
-        Ok(guard) => guard,
-    };
+    let mut set = resource.0.lock().unwrap();
 
     match set.append_bucket(items) {
-        AppendBucketResult::Ok => Ok(atoms::ok()),
-        AppendBucketResult::MaxBucketSizeExceeded => Err(atoms::max_bucket_size_exceeded()),
+        Ok(()) => Ok(atoms::ok()),
+        Err(Error::MaxBucketSizeExceeded) => Err(atoms::max_bucket_size_exceeded()),
+        Err(_) => Err(atoms::error()),
     }
 }
 
 #[rustler::nif]
-fn add(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom, usize), Atom> {
+fn add(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom, Atom, usize), Atom> {
     let item = match convert_to_supported_term(&term) {
         None => return Err(atoms::unsupported_type()),
         Some(term) => term,
     };
 
-    let mut set = match resource.0.try_lock() {
-        Err(_) => return Err(atoms::lock_fail()),
-        Ok(guard) => guard,
-    };
+    let mut set = resource.0.lock().unwrap();
 
     match set.add(item) {
-        AddResult::Added(idx) => Ok((atoms::added(), idx)),
-        AddResult::Duplicate(idx) => Ok((atoms::duplicate(), idx)),
+        Ok(idx) => Ok((atoms::ok(), atoms::added(), idx)),
+        Err(Error::Duplicate(idx)) => Ok((atoms::ok(), atoms::duplicate(), idx)),
+        Err(_) => Err(atoms::error()),
     }
 }
 
@@ -155,43 +134,32 @@ fn remove(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<(Atom,
         Some(term) => term,
     };
 
-    let mut set = match resource.0.try_lock() {
-        Err(_) => return Err(atoms::lock_fail()),
-        Ok(guard) => guard,
-    };
+    let mut set = resource.0.lock().unwrap();
 
     match set.remove(&item) {
-        RemoveResult::Removed(idx) => Ok((atoms::removed(), idx)),
-        RemoveResult::NotFound => Err(atoms::not_found()),
+        Ok(idx) => Ok((atoms::removed(), idx)),
+        Err(Error::NotFound) => Err(atoms::not_found()),
+        Err(_) => Err(atoms::error()),
     }
 }
 
 #[rustler::nif]
 fn size(resource: ResourceArc<SortedSetResource>) -> Result<usize, Atom> {
-    let set = match resource.0.try_lock() {
-        Err(_) => return Err(atoms::lock_fail()),
-        Ok(guard) => guard,
-    };
+    let set = resource.0.lock().unwrap();
 
     Ok(set.size())
 }
 
 #[rustler::nif]
 fn to_list(resource: ResourceArc<SortedSetResource>) -> Result<Vec<SupportedTerm>, Atom> {
-    let set = match resource.0.try_lock() {
-        Err(_) => return Err(atoms::lock_fail()),
-        Ok(guard) => guard,
-    };
+    let set = resource.0.lock().unwrap();
 
     Ok(set.to_vec())
 }
 
 #[rustler::nif]
 fn at(resource: ResourceArc<SortedSetResource>, index: usize) -> Result<SupportedTerm, Atom> {
-    let set = match resource.0.try_lock() {
-        Err(_) => return Err(atoms::lock_fail()),
-        Ok(guard) => guard,
-    };
+    let set = resource.0.lock().unwrap();
 
     match set.at(index) {
         None => Err(atoms::index_out_of_bounds()),
@@ -205,10 +173,7 @@ fn slice(
     start: usize,
     amount: usize,
 ) -> Result<Vec<SupportedTerm>, Atom> {
-    let set = match resource.0.try_lock() {
-        Err(_) => return Err(atoms::lock_fail()),
-        Ok(guard) => guard,
-    };
+    let set = resource.0.lock().unwrap();
 
     Ok(set.slice(start, amount))
 }
@@ -220,27 +185,18 @@ fn find_index(resource: ResourceArc<SortedSetResource>, term: Term) -> Result<us
         Some(term) => term,
     };
 
-    let set = match resource.0.try_lock() {
-        Err(_) => return Err(atoms::lock_fail()),
-        Ok(guard) => guard,
-    };
+    let set = resource.0.lock().unwrap();
 
     match set.find_index(&item) {
-        FindResult::Found {
-            bucket_idx: _,
-            inner_idx: _,
-            idx,
-        } => Ok(idx),
-        FindResult::NotFound => Err(atoms::not_found()),
+        Ok(FoundData { idx, .. }) => Ok(idx),
+        Err(Error::NotFound) => Err(atoms::not_found()),
+        Err(_) => Err(atoms::error()),
     }
 }
 
 #[rustler::nif]
 fn debug(resource: ResourceArc<SortedSetResource>) -> Result<String, Atom> {
-    let set = match resource.0.try_lock() {
-        Err(_) => return Err(atoms::lock_fail()),
-        Ok(guard) => guard,
-    };
+    let set = resource.0.lock().unwrap();
 
     Ok(set.debug())
 }
