@@ -5,7 +5,7 @@ defmodule SortedSet.MixProject do
     [
       app: :sorted_set_nif,
       name: "SortedSet",
-      version: "1.2.0",
+      version: "1.3.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       compilers: Mix.compilers(),
@@ -55,7 +55,16 @@ defmodule SortedSet.MixProject do
     [
       name: :sorted_set_nif,
       description: "SortedSet is a fast and efficient Rust backed sorted set.",
-      files: ["lib", "native/sorted_set_nif/Cargo.toml", "native/sorted_set_nif/README.md", "native/sorted_set_nif/src", ".formatter.exs", "README*", "LICENSE*", "mix.exs"],
+      files: [
+        "lib",
+        "native/sorted_set_nif/Cargo.toml",
+        "native/sorted_set_nif/README.md",
+        "native/sorted_set_nif/src",
+        ".formatter.exs",
+        "README*",
+        "LICENSE*",
+        "mix.exs"
+      ],
       maintainers: ["Discord Core Infrastructure"],
       licenses: ["MIT"],
       links: %{
