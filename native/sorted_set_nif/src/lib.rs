@@ -8,8 +8,8 @@ mod supported_term;
 use std::sync::Mutex;
 
 use jemallocator::Jemalloc;
-use rustler::resource::ResourceArc;
 use rustler::types::tuple::get_tuple;
+use rustler::ResourceArc;
 use rustler::{Atom, Env, Term};
 
 use crate::configuration::Configuration;
