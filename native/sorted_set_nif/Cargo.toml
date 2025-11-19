@@ -12,4 +12,4 @@ crate-type = ["cdylib"]
 [dependencies]
 jemalloc-info = "0.6"
 jemallocator = { version = "0.5.4", features = ["disable_initial_exec_tls", "stats"] }
-rustler = "0.31.0"
+rustler = "0.37.0"
