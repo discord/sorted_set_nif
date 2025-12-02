@@ -5,7 +5,7 @@ defmodule SortedSet.MixProject do
     [
       app: :sorted_set_nif,
       name: "SortedSet",
-      version: "1.3.0",
+      version: "2.0.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       compilers: Mix.compilers(),
@@ -25,10 +25,7 @@ defmodule SortedSet.MixProject do
   defp deps do
     [
       {:rustler, "~> 0.37.1"},
-      {:jemalloc_info,
-        github: "discord/jemalloc_info",
-        ref: "dfd2ada67eef22c9c6c3612eba00d7adf97e3e1a",
-        runtime: false},
+      {:jemalloc_info, "~> 0.7.0", runtime: false},
       {:ex_doc, "~> 0.19", only: [:dev], runtime: false},
       {:benchee, "~> 1.0", only: [:dev]},
       {:benchee_html, "~> 1.0", only: [:dev]},
