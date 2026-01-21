@@ -1,3 +1,4 @@
+extern crate jemalloc_info;
 extern crate rustler;
 
 mod bucket;
@@ -9,8 +10,9 @@ use std::sync::Mutex;
 
 use jemallocator::Jemalloc;
 use rustler::types::tuple::get_tuple;
+use rustler::Resource;
 use rustler::ResourceArc;
-use rustler::{Atom, Env, Term};
+use rustler::{Atom, Term};
 
 use crate::configuration::Configuration;
 use crate::sorted_set::SortedSet;
@@ -44,6 +46,9 @@ mod atoms {
 
 pub struct SortedSetResource(Mutex<SortedSet>);
 
+#[rustler::resource_impl]
+impl Resource for SortedSetResource {}
+
 type SortedSetArc = ResourceArc<SortedSetResource>;
 
 #[derive(Debug, PartialEq)]
@@ -74,29 +79,7 @@ pub enum AppendBucketResult {
     MaxBucketSizeExceeded,
 }
 
-rustler::init!(
-    "Elixir.Discord.SortedSet.NifBridge",
-    [
-        empty,
-        new,
-        append_bucket,
-        size,
-        add,
-        remove,
-        at,
-        slice,
-        find_index,
-        debug,
-        to_list,
-        jemalloc_info::jemalloc_allocation_info,
-    ],
-    load = load
-);
-
-fn load(env: Env, _info: Term) -> bool {
-    rustler::resource!(SortedSetResource, env);
-    true
-}
+rustler::init!("Elixir.Discord.SortedSet.NifBridge");
 
 #[rustler::nif]
 fn empty(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSetArc) {
