@@ -58,7 +58,7 @@ impl SortedSet {
     pub fn find_index(&self, item: &SupportedTerm) -> FindResult {
         let bucket_idx = self.find_bucket_index(item);
 
-        match self.buckets[bucket_idx].data.binary_search(&item) {
+        match self.buckets[bucket_idx].data.binary_search(item) {
             Ok(idx) => FindResult::Found {
                 bucket_idx,
                 inner_idx: idx,
