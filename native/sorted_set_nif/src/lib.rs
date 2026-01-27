@@ -10,9 +10,7 @@ use std::sync::Mutex;
 
 use jemallocator::Jemalloc;
 use rustler::types::tuple::get_tuple;
-use rustler::Resource;
-use rustler::ResourceArc;
-use rustler::{Atom, Term};
+use rustler::{Atom, Resource, ResourceArc, Term};
 
 use crate::configuration::Configuration;
 use crate::sorted_set::SortedSet;
