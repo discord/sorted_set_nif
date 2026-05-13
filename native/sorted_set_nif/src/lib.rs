@@ -10,7 +10,7 @@ use std::sync::Mutex;
 
 use jemallocator::Jemalloc;
 use rustler::types::tuple::get_tuple;
-use rustler::{Atom, Resource, ResourceArc, Term};
+use rustler::{Atom, Env, Resource, ResourceArc, Term};
 
 use crate::configuration::Configuration;
 use crate::sorted_set::SortedSet;
@@ -77,7 +77,18 @@ pub enum AppendBucketResult {
     MaxBucketSizeExceeded,
 }
 
-rustler::init!("Elixir.Discord.SortedSet.NifBridge");
+rustler::init!("Elixir.Discord.SortedSet.NifBridge", load = load);
+
+fn load(_env: Env, _info: Term) -> bool {
+    // Forces rustc to keep jemalloc-info's rlib in the link so its
+    // #[rustler::nif] inventory::submit! for jemalloc_allocation_info gets
+    // registered. Without a reference, unused-crate elision drops the rlib
+    // under -C linker-plugin-lto.
+    std::hint::black_box(
+        <jemalloc_info::JemallocStats as rustler::Encoder>::encode as *const (),
+    );
+    true
+}
 
 #[rustler::nif]
 fn empty(initial_item_capacity: usize, max_bucket_size: usize) -> (Atom, SortedSetArc) {
