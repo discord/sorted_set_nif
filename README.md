@@ -1,6 +1,8 @@
 # Discord.SortedSet
 
+[![CI](https://github.com/discord/sorted_set_nif/workflows/CI/badge.svg)](https://github.com/discord/sorted_set_nif/actions)
 [![Hex.pm Version](http://img.shields.io/hexpm/v/sorted_set_nif.svg?style=flat)](https://hex.pm/packages/sorted_set_nif)
+[![CI](https://github.com/discord/sorted_set_nif/workflows/CI/badge.svg)](https://github.com/discord/sorted_set_nif/actions)
 
 SortedSet is a fast and efficient data structure that provides certain guarantees and
 functionality.  The core data structure and algorithms are implemented in a Native Implemented
@@ -65,7 +67,7 @@ guarantees.
 
 Documentation is [hosted on hexdocs](https://hexdocs.pm/sorted_set_nif).
 
-For a local copy of the documentation, the `mix.exs` file is already set up for  generating 
+For a local copy of the documentation, the `mix.exs` file is already set up for  generating
 documentation, simply run the following commands to generate the documentation from source.
 
 ```bash
@@ -75,20 +77,20 @@ $ mix docs
 
 ## Running the Tests
 
-There are two test suites available in this library, an ExUnit test suite that tests the 
-correctness of the implementation from a black box point of view.  These tests can be run by 
+There are two test suites available in this library, an ExUnit test suite that tests the
+correctness of the implementation from a black box point of view.  These tests can be run by
 running `mix test` in the root of the library.
 
-The rust code also contains tests, these can be run by running `cargo test` in the 
+The rust code also contains tests, these can be run by running `cargo test` in the
 `native/sorted_set_nif` directory.
 
 ## Running the Benchmarks
 
-Before running any benchmarks it's important to remember that during development the NIF will be 
-built unoptimized.  Make sure to rebuild an optimized version of the NIF before running the 
+Before running any benchmarks it's important to remember that during development the NIF will be
+built unoptimized.  Make sure to rebuild an optimized version of the NIF before running the
 benchmarks.
 
-There are benchmarks available in the `bench` folder, these are written with 
+There are benchmarks available in the `bench` folder, these are written with
 [Benchee](https://github.com/PragTob/benchee) and can be run with the following command.
 
 ```bash
@@ -99,7 +101,7 @@ Adding the `OPTIMIZE_NIF=true` will force the benchmark to run against the fully
 
 ## Basic Usage
 
-SortedSet lives in the `Discord` namespace to prevent symbol collision, it can be used directly 
+SortedSet lives in the `Discord` namespace to prevent symbol collision, it can be used directly
 
 ```elixir
 defmodule ExampleModule do
@@ -117,7 +119,7 @@ You can always add an `alias` to make this code less verbose
 ```elixir
 defmodule ExampleModule do
   alias Discord.SortedSet
-  
+
   def get_example_sorted_set() do
     SortedSet.new()
     |> SortedSet.add(1)
@@ -127,5 +129,5 @@ defmodule ExampleModule do
 end
 ```
 
-Full API Documentation is available, there is also a full test suite with examples of how the 
+Full API Documentation is available, there is also a full test suite with examples of how the
 library can be used.
