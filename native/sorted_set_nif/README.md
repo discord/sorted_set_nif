@@ -12,7 +12,7 @@ on the SortedSet will perform a linear scan through the buckets to find the buck
 term, then a binary search is done within the bucket to complete the operation.
 
 Why not just a Vector of Terms?  This approach was explored but when the Vector needs to grow
-beyond it's capacity, copying Terms over to the new larger Vector proved to be a performance
+beyond its capacity, copying Terms over to the new larger Vector proved to be a performance
 bottle neck.  Using a Vector of Vectors, the Bucket pointers can be quickly copied when
 additional capacity is required.
 
@@ -33,9 +33,9 @@ There is some special functionality that SortedSet provides beyond sorted and un
 guarantees.
 
 1.  SortedSet has a defined ordering, unlike a pure mathematical set.
-2.  SortedSet can report the index of adding and removing items from the Set due to it's defined
+2.  SortedSet can report the index of adding and removing items from the Set due to its defined
     ordering property.
-3.  SortedSet can provide random access of items and slices due to it's defined ordering
+3.  SortedSet can provide random access of items and slices due to its defined ordering
     property.
 
 ## Caveats
