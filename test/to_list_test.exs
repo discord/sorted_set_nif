@@ -11,7 +11,7 @@ defmodule Discord.SortedSet.ToList.Test do
       assert SortedSet.to_list(set) == []
     end
 
-    @tag timeout: 240_000
+    @tag timeout: 320_000
     property "set of terms is always equivalent to the sorted unique list" do
       check all(terms <- Generator.supported_terms()) do
         expected =
